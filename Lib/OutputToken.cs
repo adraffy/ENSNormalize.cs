@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace adraffy
+﻿namespace adraffy
 {
     public class OutputToken
     {

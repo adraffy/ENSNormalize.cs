@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
+﻿using System.Text;
 
 namespace adraffy
 {
@@ -68,7 +65,7 @@ namespace adraffy
             return ret;
         }
 
-        static Dictionary<int, string> DecodeFenced(Decoder dec)
+        static Dictionary<int, string> DecodeNamedCodepoints(Decoder dec)
         {
             Dictionary<int, string> ret = new();
             int n = dec.ReadUnsigned();
@@ -79,7 +76,7 @@ namespace adraffy
             return ret;
         }
 
-        static List<Group> DecodeGroups(Decoder dec)
+        static Group[] DecodeGroups(Decoder dec)
         {
             List<Group> ret = new();
             while (true)
@@ -91,7 +88,7 @@ namespace adraffy
                 bool cm = (bits & 2) > 0;
                 ret.Add(new(ret.Count, name, restricted, cm, dec.ReadUnique(), dec.ReadUnique()));
             }
-            return ret;
+            return ret.ToArray();
         }
 
         public ENSIP15(NF nf, Decoder dec)
@@ -103,7 +100,7 @@ namespace adraffy
             NonSpacingMarkMax = dec.ReadUnsigned();
             NonSpacingMarks = dec.ReadSet();
             NFCCheck = dec.ReadSet();
-            Fenced = DecodeFenced(dec);
+            Fenced = DecodeNamedCodepoints(dec);
             Mapped = DecodeMapped(dec);
             Groups = DecodeGroups(dec);
             Emoji = dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToList();
@@ -149,8 +146,7 @@ namespace adraffy
                     }
                 }
             }
-            wholes.TrimExcess();
-            Wholes = wholes;
+            Wholes = wholes.ToArray();
 
             // precompute: emoji trie
             foreach (EmojiSequence emoji in Emoji)
