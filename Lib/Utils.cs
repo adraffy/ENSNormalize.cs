@@ -1,43 +1,17 @@
 ﻿using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 namespace ENS
 { 
     public static class Utils
     {
-        static public bool AssumeSortedContains(this IReadOnlyList<int> v, int x)
-        {
-            int a = 0;
-            int b = v.Count;
-            while (a < b)
-            {
-                int c = (b + a) >>> 1;
-                int y = v[c];
-                if (y == x)
-                {
-                    return true;
-                }
-                else if (y < x)
-                {
-                    a = c + 1;
-                }
-                else
-                {
-                    b = c;
-                }
-            }
-            return false;
-        }
-
-        static public List<int> Explode(this string s)
-        {
-            return s.EnumerateRunes().ToList().ConvertAll(x => x.Value);
-        }
-
         static public string ToHexSequence(this string s)
         {
-            return string.Join(' ', s.Explode().ConvertAll(x => x.ToString("X").PadLeft(2, '0')));
+            return string.Join(' ', s.Explode().Select(x => x.ToString("X").PadLeft(2, '0')));
+        }
+
+        static public IEnumerable<int> Explode(this string s)
+        {
+            return s.EnumerateRunes().Select(x => x.Value);
         }
 
         static public string Implode(this IEnumerable<int> cps)
@@ -75,16 +49,6 @@ namespace ENS
                 sb.AppendCodepoint(cp);
             }
         }
-    }
-
-    public static class JSONElementExt
-    {
-
-        static public List<int> ToIntList(this JsonElement x)
-        {
-            return x.EnumerateArray().ToList().ConvertAll(x => x.GetInt32());
-        }
-
     }
 
 }

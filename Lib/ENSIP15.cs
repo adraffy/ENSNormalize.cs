@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.Json;
 
 namespace ENS
 {
@@ -11,32 +10,12 @@ namespace ENS
         internal EmojiDict Dict;
         internal EmojiNode Then(int cp)
         {
-            if (Dict == null)
-            {
-                Dict = new();
-            }
+            Dict ??= new();
             if (Dict.TryGetValue(cp, out EmojiNode node))
             {
                 return node;
             }
             return Dict[cp] = new();
-        }
-    }
-
-    internal class Whole
-    {
-        internal readonly int[] Valid;
-        internal readonly int[] Confused;
-        internal readonly int[] Union;
-        internal readonly Dictionary<int, int[]> Complement = new();
-        internal Whole() { }
-        internal Whole(int[] valid, int[] confused)
-        {
-            Valid = valid;
-            Confused = confused;
-            HashSet<int> union = new(confused);
-            union.UnionWith(valid);
-            Union = union.ToArray();
         }
     }
     
@@ -52,28 +31,189 @@ namespace ENS
         const char STOP_CH = '.';
 
         public readonly NF NF;
-        public readonly string UnicodeVersion;
-        public readonly string CLDRVersion;
         public readonly int NonSpacingMarkMax;
-        public readonly List<EmojiSequence> Emoji = new();
-        public readonly int[] Ignored;
-        public readonly int[] CombiningMarks;
-        public readonly int[] NonSpacingMarks;
-        public readonly int[] ShouldEscape;
-        public readonly Dictionary<int, int[]> Mapped = new();
-        public readonly Dictionary<int, string> Fenced = new();
-
-        public readonly List<Group> Groups = new();
-        public readonly int[] PossiblyValid;
+        public readonly IReadOnlyList<EmojiSequence> Emoji;
+        public readonly IReadOnlySet<int> Ignored;
+        public readonly IReadOnlySet<int> CombiningMarks;
+        public readonly IReadOnlySet<int> NonSpacingMarks;
+        public readonly IReadOnlySet<int> ShouldEscape;
+        public readonly IReadOnlySet<int> NFCCheck;
+        public readonly IReadOnlyDictionary<int, IReadOnlyList<int>> Mapped;
+        public readonly IReadOnlyDictionary<int, string> Fenced;
+        public readonly IReadOnlyList<Group> Groups;
+        public readonly IReadOnlySet<int> PossiblyValid;
+        public readonly IReadOnlyList<Whole> Wholes;
 
         private readonly EmojiNode EmojiRoot = new();
-        private readonly Dictionary<int, Whole> Wholes = new();
+        private readonly Dictionary<int, Whole> Confusables = new();
         private readonly Whole UNIQUE_PH = new();
+        private readonly Group GREEK;
 
-        public ENSIP15(NF nf, Stream stream)
+        static Dictionary<int, IReadOnlyList<int>> DecodeMapped(Decoder dec)
+        {
+            Dictionary<int, IReadOnlyList<int>> ret = new();
+            while (true)
+            {
+                int w = dec.ReadUnsigned();
+                if (w == 0) break;
+                int[] keys = dec.ReadSortedUnique();
+                int n = keys.Length;
+                List<List<int>> m = new();
+                for (int i = 0; i < n; i++) m.Add(new());
+                for (int j = 0; j < w; j++)
+                {
+                    int[] v = dec.ReadUnsortedDeltas(n);
+                    for (int i = 0; i < n; i++) m[i].Add(v[i]);
+                }
+                for (int i = 0; i < n; i++) ret.Add(keys[i], m[i].ToArray());
+            }
+            return ret;
+        }
+
+        static Dictionary<int, string> DecodeFenced(Decoder dec)
+        {
+            Dictionary<int, string> ret = new();
+            int n = dec.ReadUnsigned();
+            foreach (int cp in dec.ReadSortedAscending(n))
+            {
+                ret.Add(cp, dec.ReadString());
+            }
+            return ret;
+        }
+
+        static List<Group> DecodeGroups(Decoder dec)
+        {
+            List<Group> ret = new();
+            while (true)
+            {
+                string name = dec.ReadString();
+                if (!name.Any()) break;
+                int bits = dec.ReadUnsigned();
+                bool restricted = (bits & 1) > 0;
+                bool cm = (bits & 2) > 0;
+                ret.Add(new(ret.Count, name, restricted, cm, dec.ReadUnique(), dec.ReadUnique()));
+            }
+            return ret;
+        }
+
+        public ENSIP15(NF nf, Decoder dec)
         {
             NF = nf;
+            ShouldEscape = dec.ReadSet();
+            Ignored = dec.ReadSet();
+            CombiningMarks = dec.ReadSet();
+            NonSpacingMarkMax = dec.ReadUnsigned();
+            NonSpacingMarks = dec.ReadSet();
+            NFCCheck = dec.ReadSet();
+            Fenced = DecodeFenced(dec);
+            Mapped = DecodeMapped(dec);
+            Groups = DecodeGroups(dec);
+            Emoji = dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToList();
+
+            // precompute: greek
+            GREEK = Groups.FirstOrDefault(g => g.Name == "Greek");
+
+            // precompute: confusable extent complements
+            List<Whole> wholes = new();
+            while (true)
+            {
+                List<int> confused = dec.ReadUnique();
+                if (!confused.Any()) break;
+                List<int> valid = dec.ReadUnique();
+                Whole w = new(valid, confused);
+                wholes.Add(w);
+                foreach (int cp in confused)
+                {
+                    Confusables.Add(cp, w);
+                }
+                HashSet<Group> groups = new();
+                List<Extent> extents = new();
+                foreach (int cp in confused.Concat(valid))
+                {
+                    Group[] gs = Groups.Where(g => g.Contains(cp)).ToArray();
+                    Extent extent = extents.Find(e => gs.Any(g => e.Groups.Contains(g)));
+                    if (extent == null)
+                    {
+                        extent = new();
+                        extents.Add(extent);
+                    }
+                    extent.Chars.Add(cp);
+                    extent.Groups.UnionWith(gs);
+                    groups.UnionWith(gs);
+                }
+                foreach (Extent extent in extents)
+                {
+                    int[] complement = groups.Except(extent.Groups).Select(g => g.Index).Order().ToArray();
+                    foreach (int cp in extent.Chars)
+                    {
+                        w.Complement.Add(cp, complement);
+                    }
+                }
+            }
+            wholes.TrimExcess();
+            Wholes = wholes;
+
+            // precompute: emoji trie
+            foreach (EmojiSequence emoji in Emoji)
+            {
+                List<EmojiNode> nodes = new() { EmojiRoot };
+                foreach (int cp in emoji.Beautified)
+                {
+                    if (cp == 0xFE0F)
+                    {
+                        for (int i = 0, e = nodes.Count; i < e; i++)
+                        {
+                            nodes.Add(nodes[i].Then(cp));
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0, e = nodes.Count; i < e; i++)
+                        {
+                            nodes[i] = nodes[i].Then(cp);
+                        }
+                    }
+                }
+                foreach (EmojiNode x in nodes)
+                {
+                    x.Emoji = emoji;
+                }
+            }
+
+            // precompute: possibly valid
+            HashSet<int> union = new();
+            HashSet<int> multi = new();
+            foreach (Group g in Groups)
+            {
+                foreach (int cp in g.Primary.Concat(g.Secondary))
+                {
+                    if (union.Contains(cp))
+                    {
+                        multi.Add(cp);
+                    }
+                    else
+                    {
+                        union.Add(cp);
+                    }
+                }
+            }
+            union.UnionWith(NF.NFD(union));
+            PossiblyValid = union;
+
+            // precompute: unique non-confusables
+            HashSet<int> unique = new(union);
+            unique.ExceptWith(multi);
+            unique.ExceptWith(Confusables.Keys);
+            foreach (int cp in unique)
+            {
+                Confusables.Add(cp, UNIQUE_PH);
+            }
+
+
+            /*
             JsonDocument json = JsonDocument.Parse(stream);
+
+            ENS.Resources.Properties.
 
             UnicodeVersion = json.RootElement.GetProperty("unicode").GetString()!.Split(' ', 2)[0];
             CLDRVersion = json.RootElement.GetProperty("cldr").GetString()!.Split(' ', 2)[0];
@@ -158,33 +298,9 @@ namespace ENS
             }
             union.UnionWith(NF.NFD(union));
             PossiblyValid = union.Order().ToArray();
+            */
         }
-
-        private void AddEmoji(int[] cps)
-        {
-            EmojiSequence emoji = new(cps);
-            Emoji.Add(emoji);
-
-            List<EmojiNode> nodes = new() { EmojiRoot };
-            foreach (int cp in cps)
-            {
-                if (cp == 0xFE0F)
-                {
-                    nodes.AddRange(nodes.ConvertAll(x => x.Then(cp)));
-                }
-                else
-                {
-                    for (int i = 0, e = nodes.Count; i < e; i++)
-                    {
-                        nodes[i] = nodes[i].Then(cp);
-                    }
-                }
-            }
-            foreach (EmojiNode x in nodes)
-            {
-                x.Emoji = emoji;
-            }
-        }
+    
         // reset LTR context
         static string ResetBidi(string s)
         {
@@ -198,7 +314,7 @@ namespace ENS
 
         public string SafeCodepoint(int cp)
         {
-            if (ShouldEscape.AssumeSortedContains(cp))
+            if (ShouldEscape.Contains(cp))
             {
                 return HexEscape(cp);
             }
@@ -213,13 +329,13 @@ namespace ENS
         public string SafeImplode(IReadOnlyList<int> cps)
         {
             StringBuilder sb = new(cps.Count + 16);
-            if (cps.Any() && CombiningMarks.AssumeSortedContains(cps[0]))
+            if (cps.Any() && CombiningMarks.Contains(cps[0]))
             {
                 sb.AppendCodepoint(0x25CC);
             }
             foreach (int cp in cps)
             {
-                if (ShouldEscape.AssumeSortedContains(cp))
+                if (ShouldEscape.Contains(cp))
                 {
                     sb.Append(HexEscape(cp));
                 }
@@ -236,7 +352,7 @@ namespace ENS
             StringBuilder sb = new(name.Length << 1);
             foreach (string label in name.Split(STOP_CH))
             {
-                List<int> cps = label.Explode();
+                int[] cps = label.Explode().ToArray();
                 try
                 {
                     List<OutputToken> tokens = OutputTokenize(cps, NF.NFC, e => e.Normalized);
@@ -257,13 +373,13 @@ namespace ENS
             StringBuilder sb = new(name.Length << 1);
             foreach (string label in name.Split(STOP_CH))
             {
-                List<int> cps = label.Explode();
+                int[] cps = label.Explode().ToArray();
                 try
                 {
                     List<OutputToken> tokens = OutputTokenize(cps, NF.NFC, e => e.Beautified);
-                    int[] norm = NormalizeLabel(tokens, out string kind, out _);
+                    int[] norm = NormalizeLabel(tokens, out _, out var g);
                     if (sb.Length > 0) sb.Append(STOP_CH);
-                    if (kind != "Greek")
+                    if (GREEK != g)
                     {
                         for (int i = 0, e = norm.Length; i < e; i++)
                         {
@@ -284,50 +400,41 @@ namespace ENS
         }
 
 
-        public int[] NormalizeLabel(IReadOnlyList<OutputToken> tokens, out string kind, out bool hasEmoji)
+        public int[] NormalizeLabel(IReadOnlyList<OutputToken> tokens, out string kind, out Group group)
         {
             if (!tokens.Any())
             {
                 throw new NormException("empty label");
             }
-            hasEmoji = tokens.Count > 1 || tokens[0].IsEmoji;
-            if (!hasEmoji)
+            bool emoji = tokens.Count > 1 || tokens[0].IsEmoji;
+            if (!emoji)
             {
-                int[] cps = tokens[0].cps;
-                if (cps.All(cp => cp < 0x80))
+                int[] ascii = tokens[0].Codepoints;
+                if (ascii.All(cp => cp < 0x80))
                 {
-                    CheckLabelExtension(cps);
-                    CheckLeadingUnderscore(cps);
+                    CheckLabelExtension(ascii);
+                    CheckLeadingUnderscore(ascii);
+                    group = null;
                     kind = "ASCII";
-                    return cps;
+                    return ascii;
                 }
             }
-            int[] norm = tokens.SelectMany(t => t.cps).ToArray();
+            int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
             CheckLeadingUnderscore(norm);
-            int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.cps).ToArray();
-            if (hasEmoji && !chars.Any())
+            int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
+            if (emoji && !chars.Any())
             {
+                group = null;
                 kind = "Emoji";
                 return norm;                
             }
-            if (CombiningMarks.AssumeSortedContains(chars[0]))
-            {
-                throw new NormException("leading combining mark", SafeCodepoint(chars[0]));
-            }
-            for (int i = 1, e = tokens.Count; i < e; i++)
-            {
-                OutputToken t = tokens[i];
-                if (!t.IsEmoji && CombiningMarks.AssumeSortedContains(t.cps[0]))
-                {
-                    throw new NormException("emoji + combining mark", $"{tokens[i-1].cps.Implode()} + {SafeCodepoint(t.cps[0])}");
-                }
-            }
+            CheckCombiningMarks(tokens);
             CheckFenced(norm);
             int[] unique = chars.Distinct().ToArray();
-            Group g = DetermineGroup(unique)[0];
-            CheckGroup(g, chars);
-            CheckWhole(g, unique);
-            kind = g.Kind;
+            group = DetermineGroup(unique)[0];
+            CheckGroup(group, chars);
+            CheckWhole(group, unique);
+            kind = group.Kind;
             return norm;
         }
 
@@ -335,7 +442,7 @@ namespace ENS
         {
             IReadOnlyList<Group> prev = Groups;
             foreach (int cp in unique) {
-                Group[] next = prev.Where(g => g.Valid.AssumeSortedContains(cp)).ToArray();
+                Group[] next = prev.Where(g => g.Contains(cp)).ToArray();
                 if (!next.Any())
                 {   
                     if (prev == Groups)
@@ -359,7 +466,7 @@ namespace ENS
         {
             foreach (int cp in cps)
             {
-                if (!g.Valid.AssumeSortedContains(cp))
+                if (!g.Contains(cp))
                 {
                     throw CreateMixtureException(g, cp);
                 }
@@ -369,10 +476,10 @@ namespace ENS
                 List<int> decomposed = NF.NFD(cps);
                 for (int i = 1, e = decomposed.Count; i < e; i++)
                 {
-                    if (NonSpacingMarks.AssumeSortedContains(decomposed[i]))
+                    if (NonSpacingMarks.Contains(decomposed[i]))
                     {
                         int j = i + 1;
-                        for (int cp; j < e && NonSpacingMarks.AssumeSortedContains(cp = decomposed[j]); j++)
+                        for (int cp; j < e && NonSpacingMarks.Contains(cp = decomposed[j]); j++)
                         {
                             for (int k = i; k < j; k++)
                             {
@@ -402,7 +509,7 @@ namespace ENS
             List<int> shared = new();
             foreach (int cp in unique)
             {
-                if (!Wholes.TryGetValue(cp, out Whole w))
+                if (!Confusables.TryGetValue(cp, out Whole w))
                 {
                     shared.Add(cp);
                 } 
@@ -412,8 +519,6 @@ namespace ENS
                 }
                 else 
                 {
-                    
-
                     int[] comp = w.Complement[cp];
                     if (bound == 0)
                     {
@@ -425,7 +530,7 @@ namespace ENS
                         int b = 0;
                         for (int i = 0; i < bound; i++)
                         {
-                            if (comp.AssumeSortedContains(maker[i]))
+                            if (comp.Contains(maker[i]))
                             {
                                 if (i > b)
                                 {
@@ -447,7 +552,7 @@ namespace ENS
                 for (int i = 0; i < bound; i++)
                 {
                     Group group = Groups[maker[i]];
-                    if (shared.All(group.Valid.AssumeSortedContains))
+                    if (shared.All(group.Contains))
                     {
                         throw new ConfusableException("whole-script confusable", g, group);
                     }
@@ -476,7 +581,7 @@ namespace ENS
             return last;
         }
 
-        public List<OutputToken> OutputTokenize(List<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, int[]> emojiStyler)
+        public List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, int[]> emojiStyler)
         {
             List<OutputToken> tokens = new();
             List<int> buf = new(cps.Count);
@@ -495,7 +600,7 @@ namespace ENS
                 else
                 {
                     int cp = cps[i++];
-                    if (PossiblyValid.AssumeSortedContains(cp))
+                    if (PossiblyValid.Contains(cp))
                     {
                         buf.Add(cp);
                     }
@@ -503,7 +608,7 @@ namespace ENS
                     {
                         buf.AddRange(mapped);
                     }
-                    else if (!Ignored.AssumeSortedContains(cp))
+                    else if (!Ignored.Contains(cp))
                     {
                         throw new DisallowedCharacterException(SafeCodepoint(cp), cp);
                     }
@@ -544,6 +649,25 @@ namespace ENS
             }
         }
         
+        void CheckCombiningMarks(IReadOnlyList<OutputToken> tokens)
+        {
+            for (int i = 0, e = tokens.Count; i < e; i++)
+            {
+                OutputToken t = tokens[i];
+                if (!t.IsEmoji && CombiningMarks.Contains(t.Codepoints[0]))
+                {
+                    if (i == 0)
+                    {
+                        throw new NormException("leading combining mark", SafeCodepoint(t.Codepoints[0]));
+                    }
+                    else
+                    {
+                        throw new NormException("emoji + combining mark", $"{tokens[i - 1].Codepoints.Implode()} + {SafeCodepoint(t.Codepoints[0])}");
+                    }
+                }
+            }
+        }
+
         // assume: ascii
         static void CheckLabelExtension(IReadOnlyList<int> cps)
         {
@@ -580,7 +704,7 @@ namespace ENS
         private IllegalMixtureException CreateMixtureException(Group g, int cp)
         {
             string conflict = SafeCodepoint(cp);
-            Group other = Groups.Find(x => x.Primary.AssumeSortedContains(cp));
+            Group other = Groups.FirstOrDefault(x => x.Primary.Contains(cp));
             if (other != null)
             {
                 conflict = $"{other.Kind} {conflict}";

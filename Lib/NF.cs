@@ -1,11 +1,7 @@
-﻿using System.Text.Json;
-
-namespace ENS
+﻿namespace ENS
 {
-
     public class NF
     {
-
         const int SHIFT = 24;
         const int MASK = (1 << SHIFT) - 1;
         const int NONE = -1;
@@ -39,48 +35,50 @@ namespace ENS
         }
 
         public readonly string UnicodeVersion;
-        HashSet<int> Exclusions = new();
-        HashSet<int> QuickCheck = new();
-        Dictionary<int, int> Rank = new();
-        Dictionary<int, int[]> Decomp = new();
-        Dictionary<int, Dictionary<int, int>> Recomp = new();
+        private readonly HashSet<int> Exclusions;
+        private readonly HashSet<int> QuickCheck;
+        private readonly Dictionary<int, int> Rank = new();
+        private readonly Dictionary<int, int[]> Decomp = new();
+        private readonly Dictionary<int, Dictionary<int, int>> Recomp = new();
 
-
-        public NF(Stream stream)
+        public NF(Decoder dec)
         {
-            JsonDocument json = JsonDocument.Parse(stream);
-            UnicodeVersion = json.RootElement.GetProperty("unicode").GetString()!.Split(' ')[0];
-            foreach (JsonElement x in json.RootElement.GetProperty("exclusions").EnumerateArray())
+            UnicodeVersion = dec.ReadString();
+            Exclusions = new(dec.ReadUnique());
+            QuickCheck = new(dec.ReadUnique());
+            int[] decomp1 = dec.ReadSortedUnique();
+            int[] decomp1A = dec.ReadUnsortedDeltas(decomp1.Length);
+            for (int i = 0; i < decomp1.Length; i++)
             {
-                Exclusions.Add(x.GetInt32());
-            }
-            foreach (JsonElement x in json.RootElement.GetProperty("qc").EnumerateArray())
+                Decomp.Add(decomp1[i], new int[] { decomp1A[i] });
+            };
+            int[] decomp2 = dec.ReadSortedUnique();
+            int[] decomp2A = dec.ReadUnsortedDeltas(decomp2.Length);
+            int[] decomp2B = dec.ReadUnsortedDeltas(decomp2.Length);
+            for (int i = 0; i < decomp2.Length; i++)
             {
-                QuickCheck.Add(x.GetInt32());
-            }
-            int rank = 0;
-            foreach (JsonElement xs in json.RootElement.GetProperty("ranks").EnumerateArray())
-            {
-                rank += 1 << SHIFT;
-                foreach (JsonElement x in xs.EnumerateArray())
+                int cp = decomp2[i];
+                int cpA = decomp2A[i];
+                int cpB = decomp2B[i];
+                Decomp.Add(cp, new int[] { cpB, cpA }); // reversed
+                if (!Exclusions.Contains(cp))
                 {
-                    Rank.Add(x.GetInt32(), rank);
-                }
-            }
-            foreach (JsonElement xy in json.RootElement.GetProperty("decomp").EnumerateArray())
-            {
-                int x = xy[0].GetInt32();
-                int[] ys = xy[1].EnumerateArray().ToList().ConvertAll(x => x.GetInt32()).ToArray();
-                Decomp.Add(x, ys.Reverse().ToArray()); // store reversed
-                if (!Exclusions.Contains(x) && ys.Length == 2)
-                {
-                    Dictionary<int, int> recomp;
-                    if (!Recomp.TryGetValue(ys[0], out recomp))
+                    if (!Recomp.TryGetValue(cpA, out var recomp))
                     {
                         recomp = new();
-                        Recomp.Add(ys[0], recomp);
+                        Recomp.Add(cpA, recomp);
                     }
-                    recomp.Add(ys[1], x);
+                    recomp.Add(cpB, cp);
+                }
+            }
+            for (int rank = 0; ; )
+            {
+                rank += 1 << SHIFT;
+                List<int> v = dec.ReadUnique();
+                if (!v.Any()) break;
+                foreach (int cp in v)
+                {
+                    Rank.Add(cp, rank);
                 }
             }
         }
@@ -98,7 +96,7 @@ namespace ENS
             {
                 if (Recomp.TryGetValue(a, out var recomp))
                 {
-                    if (recomp.TryGetValue(b, out int cp))
+                    if (recomp.TryGetValue(b, out var cp))
                     {
                         return cp;
                     }
@@ -107,25 +105,25 @@ namespace ENS
             }
         }
 
-        class Packer
+        internal class Packer
         {
-            readonly NF NF;
-            public List<int> Packed = new();
-            public bool CheckOrder = false;
-            public Packer(NF x)
+            internal readonly NF NF;
+            internal List<int> Packed = new();
+            internal bool CheckOrder = false;
+            internal Packer(NF x)
             {
                 NF = x;
             }
-            public void Add(int cp)
+            internal void Add(int cp)
             {
-                if (NF.Rank.TryGetValue(cp, out int rank))
+                if (NF.Rank.TryGetValue(cp, out var rank))
                 {
                     CheckOrder = true;
                     cp |= rank;
                 }
                 Packed.Add(cp);
             }
-            public void FixOrder()
+            internal void FixOrder()
             {
                 if (!CheckOrder || Packed.Count == 1) return;
                 int prev = UnpackCC(Packed[0]);
@@ -150,8 +148,7 @@ namespace ENS
             }
         }
 
-
-        List<int> Decomposed(IEnumerable<int> cps)
+        internal List<int> Decomposed(IEnumerable<int> cps)
         {
             Packer p = new(this);
             List<int> buf = new();
@@ -195,7 +192,7 @@ namespace ENS
             return p.Packed;
         }
 
-        List<int> ComposedFromPacked(List<int> packed)
+        internal List<int> ComposedFromPacked(IReadOnlyList<int> packed)
         {
             List<int> cps = new();
             List<int> stack = new();

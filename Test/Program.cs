@@ -1,9 +1,6 @@
 ﻿
 using ENS;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Security.Cryptography;
 using System.Text.Json;
 
 ENSIP15 impl = ENS.Normalize.LATEST;
@@ -11,9 +8,6 @@ ENSIP15 impl = ENS.Normalize.LATEST;
 if (!args.Any())
 {
     TestNF(impl.NF);
-    //Console.WriteLine(impl.Normalize(new int[] { 0x78, 0x6E, 0x2D, 0x2D, 0x1F4A9 }.Implode()).ToHexSequence());
-    //Console.WriteLine(impl.Normalize("бургер").ToHexSequence());
-    
     TestENSIP15(impl);
 } 
 else if (args[0] == "nf")
@@ -29,6 +23,9 @@ else if (args[0] == "play")
     Console.WriteLine(impl.NF.NFC("e\u0300"));
     Console.WriteLine(impl.Normalize("\u03C2"));
     Console.WriteLine(impl.Normalize("RAFFY.eTh"));
+    //Console.WriteLine(impl.Normalize(new int[] { 0x78, 0x6E, 0x2D, 0x2D, 0x1F4A9 }.Implode()).ToHexSequence());
+    //Console.WriteLine(impl.Normalize("бургер").ToHexSequence());
+
 }
 else
 {
@@ -37,9 +34,11 @@ else
 
 int TestENSIP15(ENSIP15 impl)
 {
+    Stopwatch watch = new();
+    watch.Start();
+    Console.WriteLine("[TestENSIP15]");
     int errors = 0;
-    Console.WriteLine($"Unicode Version: {impl.UnicodeVersion}");
-    Console.WriteLine($"   CLDR Version: {impl.CLDRVersion}");
+    //Console.WriteLine($"Unicode Version: {impl.UnicodeVersion}");
     JsonDocument json = JsonDocument.Parse(File.ReadAllBytes("data/tests.json"));
     foreach (JsonElement test in json.RootElement.EnumerateArray())
     {
@@ -69,13 +68,16 @@ int TestENSIP15(ENSIP15 impl)
             }
         }
     }
-    Console.WriteLine($"{PassOrFail(errors == 0)} Errors: {errors}");
+    watch.Stop();
+    Console.WriteLine($"{PassOrFail(errors == 0)} Errors({errors}) Time({watch.ElapsedMilliseconds})");
     return errors;
 }
 
 
 int TestNF(NF impl)
 {
+    Stopwatch watch = new();
+    Console.WriteLine("[TestNF]");
     int errors = 0;
     Console.WriteLine($"Unicode Version: {impl.UnicodeVersion}");
     JsonDocument json = JsonDocument.Parse(File.ReadAllBytes("data/nf-tests.json"));
@@ -110,7 +112,8 @@ int TestNF(NF impl)
         Console.WriteLine($"{state} {error}/{count} {section.Name}");
         errors += sectionErrors;
     }
-    Console.WriteLine($"{PassOrFail(errors == 0)} Errors: {errors}");
+    watch.Stop();
+    Console.WriteLine($"{PassOrFail(errors == 0)} Errors({errors}) Time({watch.ElapsedMilliseconds})");
     return errors;
 }
 

@@ -4,7 +4,7 @@
     {
         public readonly Group Group;
         public readonly Group OtherGroup;
-        internal ConfusableException(string reason, Group group, Group other) : base("whole-script-confusable", reason)
+        internal ConfusableException(string reason, Group group, Group other) : base("whole-script confusable", reason)
         {
             Group = group;
             OtherGroup = other;

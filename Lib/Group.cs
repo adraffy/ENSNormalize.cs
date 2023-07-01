@@ -1,7 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Text.Json;
-
-namespace ENS
+﻿namespace ENS
 {
     public class Group
     {
@@ -9,26 +6,22 @@ namespace ENS
         public readonly string Name;
         public readonly string Kind;
         public readonly bool Restricted;
-        public readonly int[] Primary;
-        public readonly int[] Secondary;
-        public readonly int[] Valid;
+        public readonly IReadOnlySet<int> Primary;
+        public readonly IReadOnlySet<int> Secondary;
         public readonly bool CMWhitelisted;
-        public Group(int index, JsonElement json)
+        internal Group(int index,  string name, bool restricted, bool cm, IEnumerable<int> primary, IEnumerable<int> secondary)
         {
             Index = index;
-            Name = json.GetProperty("name").GetString()!;
-            Restricted = json.TryGetProperty("restricted", out JsonElement _0) && _0.GetBoolean();
-            Kind = Restricted ? $"[Restricted[{Name}]" : Name;
-            Primary = json.GetProperty("primary").ToIntList().ToArray();
-            Secondary = json.GetProperty("secondary").ToIntList().ToArray();
-            HashSet<int> union = new(Primary);
-            union.UnionWith(Secondary);
-            Valid = union.Order().ToArray();
-            CMWhitelisted = json.TryGetProperty("cm", out JsonElement _1);
-            if (CMWhitelisted && _1.GetArrayLength() > 0)
-            {
-                throw new InvalidOperationException("expected empty");
-            }
+            Name = name;
+            Restricted = restricted;
+            CMWhitelisted = cm;
+            Primary = new HashSet<int>(primary); 
+            Secondary = new HashSet<int>(secondary);
+            Kind = Restricted ? $"Restricted[{Name}]" : Name;
+        }
+        public bool Contains(int cp)
+        {
+            return Primary.Contains(cp) || Secondary.Contains(cp);
         }
     }
 }

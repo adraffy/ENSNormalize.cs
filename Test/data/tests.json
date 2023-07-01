@@ -414,6 +414,11 @@
 		"comment": "Invalid Emoji Tag Sequence"
 	},
 	{
+		"name": "0x✌️🏼",
+		"error": true,
+		"comment": "Malicious FE0F"
+	},
+	{
 		"name": "۰۱۲۳۸۹",
 		"norm": "٠١٢٣٨٩",
 		"comment": "Arabic Mapping"
@@ -67977,10 +67982,6 @@
 	{
 		"name": "۵۵۲۷",
 		"norm": "۵۵٢٧"
-	},
-	{
-		"name": "0x✌️🏼",
-		"norm": "0x✌🏼"
 	},
 	{
 		"name": "۹۱۵",

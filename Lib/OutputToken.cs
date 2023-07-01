@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ENS
+﻿namespace ENS
 {
     public class OutputToken
     {
         public readonly bool IsEmoji;
-        public int[] cps;
-        public OutputToken(bool _IsEmoji, int[] _cps)
+        public readonly int[] Codepoints;
+        public OutputToken(bool emoji, int[] cps)
         {
-            IsEmoji = _IsEmoji;
-            cps = _cps;
+            IsEmoji = emoji;
+            Codepoints = cps;
         }
     }
 }

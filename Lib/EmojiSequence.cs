@@ -1,5 +1,4 @@
-﻿
-namespace ENS
+﻿namespace ENS
 {
     public class EmojiSequence
     {
