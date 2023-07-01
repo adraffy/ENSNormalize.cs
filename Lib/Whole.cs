@@ -1,4 +1,4 @@
-﻿namespace ENS
+﻿namespace adraffy
 {
     public class Whole
     {
@@ -7,7 +7,7 @@
 
         internal readonly Dictionary<int, int[]> Complement = new();
         internal Whole() { }
-        internal Whole(IEnumerable<int> valid, IEnumerable<int> confused)
+        internal Whole(List<int> valid, List<int> confused)
         {
             Valid = new HashSet<int>(valid);
             Confused = new HashSet<int>(confused);

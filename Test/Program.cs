@@ -1,37 +1,54 @@
-﻿
-using ENS;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
+using adraffy;
 
-ENSIP15 impl = ENS.Normalize.LATEST;
+ENSIP15 impl = ENSNormalize.ENSIP15;
 
-if (!args.Any())
-{
-    TestNF(impl.NF);
-    TestENSIP15(impl);
-} 
-else if (args[0] == "nf")
-{
-    TestNF(impl.NF);
-} 
-else if (args[0] == "ensip15")
-{
-    TestENSIP15(impl);
-}
-else if (args[0] == "play")
-{
-    Console.WriteLine(impl.NF.NFC("e\u0300"));
-    Console.WriteLine(impl.Normalize("\u03C2"));
-    Console.WriteLine(impl.Normalize("RAFFY.eTh"));
-    //Console.WriteLine(impl.Normalize(new int[] { 0x78, 0x6E, 0x2D, 0x2D, 0x1F4A9 }.Implode()).ToHexSequence());
-    //Console.WriteLine(impl.Normalize("бургер").ToHexSequence());
+TestNF(ENSNormalize.NF);
+TestENSIP15(ENSNormalize.ENSIP15);
 
-}
-else
+foreach (Group g in impl.Groups)
 {
-    throw new Exception("unknown mode");
+    Console.WriteLine($"{g.Description} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
 }
 
+//Console.WriteLine(impl.NF.NFC("e\u0300").ToHexSequence());
+
+DumpSplit("RAFFY.eTh");
+DumpSplit("xn--💩.eth");
+DumpSplit("бургер");
+DumpSplit("☝\uFE0F🏻");
+DumpSplit("💩Raffy.eth_");
+
+DumpLabel(impl.NormalizeLabel("."));
+
+void DumpSplit(string name)
+{
+    Label[] labels = ENSNormalize.ENSIP15.Split(name);
+    Console.WriteLine("[");
+    for (int i = 0; i < labels.Length; i++) { 
+        if (i > 0) Console.WriteLine();
+        DumpLabel(labels[i]);
+    }
+    Console.WriteLine("]");
+}
+void DumpLabel(Label label)
+{
+    Console.WriteLine($"  Input: {label.Input.ToHexSequence()}");
+    if (label.Tokens != null)
+    {
+        Console.WriteLine($" Tokens: {string.Join('+', label.Tokens.Select(t => t.ToString()))}");
+    }
+    if (label.Error == null)
+    {
+        Console.WriteLine($"   Kind: {label.Kind}");
+        Console.WriteLine($" Output: {label.Normalized.ToHexSequence()}");
+    }
+    else
+    {
+        Console.WriteLine($"  Error: {label.Error.Message}");
+    }
+}
 int TestENSIP15(ENSIP15 impl)
 {
     Stopwatch watch = new();
@@ -72,8 +89,6 @@ int TestENSIP15(ENSIP15 impl)
     Console.WriteLine($"{PassOrFail(errors == 0)} Errors({errors}) Time({watch.ElapsedMilliseconds})");
     return errors;
 }
-
-
 int TestNF(NF impl)
 {
     Stopwatch watch = new();
@@ -116,7 +131,6 @@ int TestNF(NF impl)
     Console.WriteLine($"{PassOrFail(errors == 0)} Errors({errors}) Time({watch.ElapsedMilliseconds})");
     return errors;
 }
-
 string PassOrFail(bool pass)
 {
     return pass ? "PASS" : "FAIL";

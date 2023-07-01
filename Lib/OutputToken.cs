@@ -1,4 +1,6 @@
-﻿namespace ENS
+﻿using System.Collections.Generic;
+
+namespace adraffy
 {
     public class OutputToken
     {
@@ -8,6 +10,11 @@
         {
             IsEmoji = emoji;
             Codepoints = cps;
+        }
+        public override string ToString() 
+        {
+            string name = IsEmoji ? "Emoji" : "Text";
+            return $"{name}[{Codepoints.ToHexSequence()}]";
         }
     }
 }

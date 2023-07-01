@@ -1,4 +1,4 @@
-﻿namespace ENS
+﻿namespace adraffy
 {
     public class NF
     {
@@ -35,6 +35,7 @@
         }
 
         public readonly string UnicodeVersion;
+
         private readonly HashSet<int> Exclusions;
         private readonly HashSet<int> QuickCheck;
         private readonly Dictionary<int, int> Rank = new();
@@ -107,12 +108,12 @@
 
         internal class Packer
         {
-            internal readonly NF NF;
+            readonly NF NF;
+            bool CheckOrder = false;
             internal List<int> Packed = new();
-            internal bool CheckOrder = false;
-            internal Packer(NF x)
+            internal Packer(NF nf)
             {
-                NF = x;
+                NF = nf;
             }
             internal void Add(int cp)
             {
@@ -125,6 +126,7 @@
             }
             internal void FixOrder()
             {
+                // TODO: apply NFC Quick Check
                 if (!CheckOrder || Packed.Count == 1) return;
                 int prev = UnpackCC(Packed[0]);
                 for (int i = 1; i < Packed.Count; i++)
@@ -147,7 +149,6 @@
                 }
             }
         }
-
         internal List<int> Decomposed(IEnumerable<int> cps)
         {
             Packer p = new(this);

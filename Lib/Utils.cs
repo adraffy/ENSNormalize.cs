@@ -1,12 +1,16 @@
 ﻿using System.Text;
 
-namespace ENS
+namespace adraffy
 { 
     public static class Utils
     {
+        static public string ToHexSequence(this IEnumerable<int> v)
+        {
+            return string.Join(' ', v.Select(x => x.ToString("X").PadLeft(2, '0')));
+        }
         static public string ToHexSequence(this string s)
         {
-            return string.Join(' ', s.Explode().Select(x => x.ToString("X").PadLeft(2, '0')));
+            return s.Explode().ToHexSequence();
         }
 
         static public IEnumerable<int> Explode(this string s)

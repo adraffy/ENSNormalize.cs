@@ -1,4 +1,4 @@
-﻿namespace ENS
+﻿namespace adraffy
 {
     public class DisallowedCharacterException : NormException
     {

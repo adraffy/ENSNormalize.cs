@@ -1,10 +1,10 @@
-﻿namespace ENS
+﻿namespace adraffy
 {
     public class Group
     {
         public readonly int Index;
         public readonly string Name;
-        public readonly string Kind;
+        public readonly string Description;
         public readonly bool Restricted;
         public readonly IReadOnlySet<int> Primary;
         public readonly IReadOnlySet<int> Secondary;
@@ -17,11 +17,15 @@
             CMWhitelisted = cm;
             Primary = new HashSet<int>(primary); 
             Secondary = new HashSet<int>(secondary);
-            Kind = Restricted ? $"Restricted[{Name}]" : Name;
+            Description = Restricted ? $"Restricted[{Name}]" : Name;
         }
         public bool Contains(int cp)
         {
             return Primary.Contains(cp) || Secondary.Contains(cp);
+        }
+        public override string ToString()
+        {
+            return Description;
         }
     }
 }

@@ -1,20 +1,18 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Text;
 
-namespace ENS
+namespace adraffy
 {
-    using EmojiDict = Dictionary<int, EmojiNode>;
-
     internal class EmojiNode
     {
         internal EmojiSequence Emoji;
-        internal EmojiDict Dict;
+        internal Dictionary<int, EmojiNode> Dict;
         internal EmojiNode Then(int cp)
         {
             Dict ??= new();
-            if (Dict.TryGetValue(cp, out EmojiNode node))
-            {
-                return node;
-            }
+            if (Dict.TryGetValue(cp, out var node)) return node;
             return Dict[cp] = new();
         }
     }
@@ -143,7 +141,8 @@ namespace ENS
                 }
                 foreach (Extent extent in extents)
                 {
-                    int[] complement = groups.Except(extent.Groups).Select(g => g.Index).Order().ToArray();
+                    int[] complement = groups.Except(extent.Groups).Select(g => g.Index).ToArray();
+                    Array.Sort(complement);
                     foreach (int cp in extent.Chars)
                     {
                         w.Complement.Add(cp, complement);
@@ -208,97 +207,6 @@ namespace ENS
             {
                 Confusables.Add(cp, UNIQUE_PH);
             }
-
-
-            /*
-            JsonDocument json = JsonDocument.Parse(stream);
-
-            ENS.Resources.Properties.
-
-            UnicodeVersion = json.RootElement.GetProperty("unicode").GetString()!.Split(' ', 2)[0];
-            CLDRVersion = json.RootElement.GetProperty("cldr").GetString()!.Split(' ', 2)[0];
-
-            ShouldEscape = json.RootElement.GetProperty("escape").ToIntList().ToArray();
-            Ignored = json.RootElement.GetProperty("ignored").ToIntList().ToArray();
-            CombiningMarks = json.RootElement.GetProperty("cm").ToIntList().ToArray();
-            NonSpacingMarks = json.RootElement.GetProperty("nsm").ToIntList().ToArray();
-            NonSpacingMarkMax = json.RootElement.GetProperty("nsm_max").GetInt32();
-
-            foreach (JsonElement x in json.RootElement.GetProperty("mapped").EnumerateArray())
-            {
-                Mapped.Add(x[0].GetInt32(), x[1].ToIntList().ToArray());
-            }
-            foreach (JsonElement x in json.RootElement.GetProperty("emoji").EnumerateArray())
-            {
-                AddEmoji(x.ToIntList().ToArray());
-            }
-            foreach (JsonElement x in json.RootElement.GetProperty("fenced").EnumerateArray())
-            {
-                Fenced.Add(x[0].GetInt32(), x[1].GetString()!);
-            }
-            foreach (JsonElement x in json.RootElement.GetProperty("groups").EnumerateArray())
-            {
-                Groups.Add(new(Groups.Count, x));
-            }
-            foreach (JsonElement x in json.RootElement.GetProperty("wholes").EnumerateArray())
-            {
-                int[] valid = x.GetProperty("valid").ToIntList().ToArray();
-                int[] confused = x.GetProperty("confused").ToIntList().ToArray();
-                Whole w = new(valid, confused);
-                foreach (int cp in confused)
-                {
-                    Wholes.Add(cp, w);
-                }
-                HashSet<Group> outer = new();
-                List<Extent> extents = new();
-                foreach (int cp in w.Union)
-                {
-                    Group[] gs = Groups.Where(g => g.Valid.AssumeSortedContains(cp)).ToArray();
-                    Extent extent = extents.Find(e => gs.Any(g => e.Groups.Contains(g)));
-                    if (extent == null)
-                    {
-                        extent = new();
-                        extents.Add(extent);
-                    }
-                    extent.Chars.Add(cp);
-                    extent.Groups.UnionWith(gs);
-                    outer.UnionWith(gs);
-                }
-                foreach (Extent extent in extents)  {
-                    int[] complement = outer.Except(extent.Groups).Select(g => g.Index).Order().ToArray();
-                    foreach (int cp in extent.Chars)
-                    {
-                        w.Complement.Add(cp, complement);
-                    }
-                }
-            }
-
-            HashSet<int> union = new();
-            HashSet<int> multi = new();
-            foreach (Group g in Groups)
-            {
-                foreach (int cp in g.Valid)
-                {
-                    if (union.Contains(cp))
-                    {
-                        multi.Add(cp);
-                    } 
-                    else
-                    {
-                        union.Add(cp);
-                    }
-                }
-            }
-            HashSet<int> unique = new(union);
-            unique.ExceptWith(multi);
-            unique.ExceptWith(Wholes.Keys);
-            foreach (int cp in unique)
-            {
-                Wholes.Add(cp, UNIQUE_PH);
-            }
-            union.UnionWith(NF.NFD(union));
-            PossiblyValid = union.Order().ToArray();
-            */
         }
     
         // reset LTR context
@@ -309,9 +217,10 @@ namespace ENS
         // format as {HEX}
         static string HexEscape(int cp)
         {
-            return $"{{{cp.ToString("X")}}}";
+            return $"{{{cp:X}}}";
         }
 
+        // format as "X {HEX}" if possible
         public string SafeCodepoint(int cp)
         {
             if (ShouldEscape.Contains(cp))
@@ -323,7 +232,6 @@ namespace ENS
                 return $"{ResetBidi(SafeImplode(new int[] { cp }))} {HexEscape(cp)}";
             }
         }
-
 
         // assume: cps.length > 0
         public string SafeImplode(IReadOnlyList<int> cps)
@@ -347,16 +255,17 @@ namespace ENS
             return sb.ToString();
         }
 
+        // throws
         public string Normalize(string name)
         {
-            StringBuilder sb = new(name.Length << 1);
+            StringBuilder sb = new(name.Length + 16);
             foreach (string label in name.Split(STOP_CH))
             {
                 int[] cps = label.Explode().ToArray();
                 try
                 {
                     List<OutputToken> tokens = OutputTokenize(cps, NF.NFC, e => e.Normalized);
-                    int[] norm = NormalizeLabel(tokens, out _, out _);
+                    IReadOnlyList<int> norm = NormalizedLabelFromTokens(tokens, out _, out _);
                     if (sb.Length > 0) sb.Append(STOP_CH);
                     sb.AppendCodepoints(norm);
                 }
@@ -368,16 +277,17 @@ namespace ENS
             return sb.ToString();
         }
 
+        // throws
         public string Beautify(string name)
         {
-            StringBuilder sb = new(name.Length << 1);
+            StringBuilder sb = new(name.Length + 16);
             foreach (string label in name.Split(STOP_CH))
             {
                 int[] cps = label.Explode().ToArray();
                 try
                 {
                     List<OutputToken> tokens = OutputTokenize(cps, NF.NFC, e => e.Beautified);
-                    int[] norm = NormalizeLabel(tokens, out _, out var g);
+                    int[] norm = NormalizedLabelFromTokens(tokens, out _, out var g);
                     if (sb.Length > 0) sb.Append(STOP_CH);
                     if (GREEK != g)
                     {
@@ -391,36 +301,51 @@ namespace ENS
                     }
                     sb.AppendCodepoints(norm);
                 }
-                catch (NormException err)
+                catch (NormException e)
                 {
-                    throw new InvalidLabelException(label, $"Invalid label \"{SafeImplode(cps)}\": {err.Message}", err);
+                    throw new InvalidLabelException(label, $"Invalid label \"{SafeImplode(cps)}\": {e.Message}", e);
                 }
             }
             return sb.ToString();
         }
 
+        // doesn't throw
+        public Label[] Split(string name)
+        {
+            return name.Split(STOP_CH).Select(NormalizeLabel).ToArray();
+        }
+        public Label NormalizeLabel(string label)
+        {
+            int[] input = label.Explode().ToArray();
+            List<OutputToken> tokens = null;
+            try
+            {
+                tokens = OutputTokenize(input, NF.NFC, e => e.Normalized.ToArray()); // force a copy since we are exposing
+                int[] norm = NormalizedLabelFromTokens(tokens, out var kind, out var g);
+                return new Label(input, tokens, norm, kind, g);
+            }
+            catch (NormException e)
+            {
+                return new Label(input, tokens, e);
+            }
+        }
 
-        public int[] NormalizeLabel(IReadOnlyList<OutputToken> tokens, out string kind, out Group group)
+        int[] NormalizedLabelFromTokens(IReadOnlyList<OutputToken> tokens, out string kind, out Group group)
         {
             if (!tokens.Any())
             {
                 throw new NormException("empty label");
             }
-            bool emoji = tokens.Count > 1 || tokens[0].IsEmoji;
-            if (!emoji)
-            {
-                int[] ascii = tokens[0].Codepoints;
-                if (ascii.All(cp => cp < 0x80))
-                {
-                    CheckLabelExtension(ascii);
-                    CheckLeadingUnderscore(ascii);
-                    group = null;
-                    kind = "ASCII";
-                    return ascii;
-                }
-            }
             int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
             CheckLeadingUnderscore(norm);
+            bool emoji = tokens.Count > 1 || tokens[0].IsEmoji;
+            if (!emoji && norm.All(cp => cp < 0x80))
+            {
+                CheckLabelExtension(norm);
+                group = null;
+                kind = "ASCII";
+                return norm;
+            }
             int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
             if (emoji && !chars.Any())
             {
@@ -434,7 +359,7 @@ namespace ENS
             group = DetermineGroup(unique)[0];
             CheckGroup(group, chars);
             CheckWhole(group, unique);
-            kind = group.Kind;
+            kind = group.Description;
             return norm;
         }
 
@@ -554,13 +479,13 @@ namespace ENS
                     Group group = Groups[maker[i]];
                     if (shared.All(group.Contains))
                     {
-                        throw new ConfusableException("whole-script confusable", g, group);
+                        throw new ConfusableException(g, group);
                     }
                 }
             }
         }
 
-        public EmojiSequence FindEmoji(IReadOnlyList<int> cps, ref int index)
+        EmojiSequence FindEmoji(IReadOnlyList<int> cps, ref int index)
         {
             EmojiNode node = EmojiRoot;
             EmojiSequence last = null;
@@ -581,7 +506,7 @@ namespace ENS
             return last;
         }
 
-        public List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, int[]> emojiStyler)
+        List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, int[]> emojiStyler)
         {
             List<OutputToken> tokens = new();
             List<int> buf = new(cps.Count);
@@ -624,7 +549,7 @@ namespace ENS
 
         void CheckFenced(IReadOnlyList<int> cps)
         {
-            if (Fenced.TryGetValue(cps[0], out string name))
+            if (Fenced.TryGetValue(cps[0], out var name))
             {
                 throw new NormException("leading fenced", name);
             }
@@ -707,9 +632,9 @@ namespace ENS
             Group other = Groups.FirstOrDefault(x => x.Primary.Contains(cp));
             if (other != null)
             {
-                conflict = $"{other.Kind} {conflict}";
+                conflict = $"{other.Description} {conflict}";
             }
-            return new IllegalMixtureException($"{g.Kind} + {conflict}", g, cp, other);
+            return new IllegalMixtureException($"{g.Description} + {conflict}", g, cp, other);
         }
 
         

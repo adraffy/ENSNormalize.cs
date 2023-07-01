@@ -1,4 +1,4 @@
-﻿namespace ENS
+﻿namespace adraffy
 {
     public class Decoder
     {
@@ -131,7 +131,9 @@
         }
         public int[] ReadSortedUnique()
         {
-            return ReadUnique().Order().ToArray();
+            int[] v = ReadUnique().ToArray();
+            Array.Sort(v);
+            return v;
         }
         public HashSet<int> ReadSet()
         {

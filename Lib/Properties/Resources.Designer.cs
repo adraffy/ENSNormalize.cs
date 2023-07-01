@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ENS.Properties {
+namespace adraffy.Properties {
     using System;
     
     
