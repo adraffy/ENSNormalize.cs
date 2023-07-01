@@ -4,7 +4,6 @@ using adraffy;
 
 ENSIP15 impl = ENSNormalize.ENSIP15;
 
-
 TestNF(ENSNormalize.NF);
 TestENSIP15(ENSNormalize.ENSIP15);
 
@@ -25,7 +24,6 @@ DumpLabel(impl.NormalizeLabel("."));
 
 // readme
 Console.WriteLine(adraffy.ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh").ToHexSequence());
-
 Console.WriteLine(adraffy.ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth").ToHexSequence());
 
 
