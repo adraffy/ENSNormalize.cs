@@ -39,7 +39,6 @@ Label[] labels = ENSNormalize.ENSIP15.Split("💩Raffy.eth_");
 //       OutputToken { Codepoints: [ 114, 97, 102, 102, 121 ] }
 //     ],
 //     Normalized: [ 128169, 114, 97, 102, 102, 121 ],
-//     Kind: "Latin"
 //     Group: Group { Name: "Latin", ... }
 //   },
 //   Label {
@@ -54,6 +53,7 @@ Label[] labels = ENSNormalize.ENSIP15.Split("💩Raffy.eth_");
 // string -> Label
 // never throws
 Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
+// note: this throws on "."
 ```
 
 ### Normalization Properties
@@ -77,7 +77,7 @@ ENSIP15.SafeImplode(new int[]{ 0x303, 0xFE0F }); // "◌̃{FE0F}"
 ENSIP15.ShouldEscape.Contains(0x202E); // true
 ```
 
-#### Label Error with Additional Context
+#### Errors with Additional Context
 * (Base) [NormException](./Lib/NormException.cs) `{ Kind: string }`
 * [DisallowedCharacterException](./Lib/DisallowedCharacterException.cs) `{ CodePoint }`
 * [ConfusableException](./Lib/ConfusableException.cs) `{ Group, OtherGroup }`

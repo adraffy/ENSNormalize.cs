@@ -1,4 +1,7 @@
-﻿namespace adraffy
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace adraffy
 {
     public class NF
     {
@@ -140,7 +143,9 @@
                     int j = i - 1;
                     while (true)
                     {
-                        (Packed[j], Packed[j + 1]) = (Packed[j + 1], Packed[j]);
+                        int temp = Packed[j];
+                        Packed[j] = Packed[j + 1];
+                        Packed[j + 1] = temp;
                         if (j == 0) break;
                         prev = UnpackCC(Packed[--j]);
                         if (prev <= cc) break;

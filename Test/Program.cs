@@ -7,7 +7,7 @@ TestENSIP15(ENSNormalize.ENSIP15);
 
 foreach (Group g in ENSNormalize.ENSIP15.Groups)
 {
-    Console.WriteLine($"{g.Description} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
+    Console.WriteLine($"{g.Index + 1}. {g.Description} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
 }
 
 Console.WriteLine(ENSNormalize.NF.NFC("e\u0300").ToHexSequence());
@@ -18,8 +18,13 @@ DumpSplit("xn--💩.eth");
 DumpSplit("бургер");
 DumpSplit("☝\uFE0F🏻");
 DumpSplit("💩Raffy.eth_");
+DumpSplit("");
 
 DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("."));
+DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("raffy"));
+
+Console.WriteLine($"Emojis: {ENSNormalize.ENSIP15.Emojis.Count}");
+Console.WriteLine($"Groups: {ENSNormalize.ENSIP15.Groups.Count}");
 
 // readme
 Console.WriteLine(ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh").ToHexSequence());
@@ -31,29 +36,32 @@ Console.WriteLine(ENSNormalize.ENSIP15.ShouldEscape.Contains(0x202E));
 void DumpSplit(string name)
 {
     Label[] labels = ENSNormalize.ENSIP15.Split(name);
-    Console.WriteLine("[");
-    for (int i = 0; i < labels.Length; i++) { 
-        if (i > 0) Console.WriteLine();
-        DumpLabel(labels[i]);
+    Console.Write('[');
+    if (labels.Any()) Console.WriteLine();
+    foreach (Label x in labels) 
+    {
+        Console.Write("  ");
+        DumpLabel(x);
     }
-    Console.WriteLine("]");
+    Console.WriteLine(']');
 }
 void DumpLabel(Label label)
 {
-    Console.WriteLine($"  Input: {label.Input.ToHexSequence()}");
+    Console.Write($"[{label.Input.ToHexSequence()}]");
     if (label.Tokens != null)
     {
-        Console.WriteLine($" Tokens: {string.Join('+', label.Tokens.Select(t => t.ToString()))}");
+        Console.Write($" <{string.Join('+', label.Tokens.Select(t => t.ToString()))}>");
     }
     if (label.Error == null)
     {
-        Console.WriteLine($"   Kind: {label.Kind}");
-        Console.WriteLine($" Output: {label.Normalized.ToHexSequence()}");
+        Console.Write($" {label.Group} [{label.Normalized.ToHexSequence()}]");
     }
     else
     {
-        Console.WriteLine($"  Error: {label.Error.Message}");
+        Console.Write($" \"{label.Error.Message}\"");
     }
+    Console.WriteLine();
+
 }
 int TestENSIP15(ENSIP15 impl)
 {

@@ -1,9 +1,11 @@
-﻿namespace adraffy
+﻿using System.Collections.Generic;
+
+namespace adraffy
 {
     public class Whole
     {
-        public readonly IReadOnlySet<int> Valid;
-        public readonly IReadOnlySet<int> Confused;
+        public readonly IReadOnlyCollection<int> Valid;
+        public readonly IReadOnlyCollection<int> Confused;
 
         internal readonly Dictionary<int, int[]> Complement = new();
         internal Whole() { }

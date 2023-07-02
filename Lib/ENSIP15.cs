@@ -1,5 +1,7 @@
-﻿using System.Reflection.Emit;
-using System.Text;
+﻿using System.Text;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace adraffy
 {
@@ -26,17 +28,17 @@ namespace adraffy
         const char STOP_CH = '.';
 
         public readonly NF NF;
-        public readonly int NonSpacingMarkMax;
+        public readonly int MaxNonSpacingMarks;
         public readonly IReadOnlyList<EmojiSequence> Emojis;
-        public readonly IReadOnlySet<int> Ignored;
-        public readonly IReadOnlySet<int> CombiningMarks;
-        public readonly IReadOnlySet<int> NonSpacingMarks;
-        public readonly IReadOnlySet<int> ShouldEscape;
-        public readonly IReadOnlySet<int> NFCCheck;
+        public readonly IReadOnlyCollection<int> Ignored;
+        public readonly IReadOnlyCollection<int> CombiningMarks;
+        public readonly IReadOnlyCollection<int> NonSpacingMarks;
+        public readonly IReadOnlyCollection<int> ShouldEscape;
+        public readonly IReadOnlyCollection<int> NFCCheck;
         public readonly IReadOnlyDictionary<int, IReadOnlyList<int>> Mapped;
         public readonly IReadOnlyDictionary<int, string> Fenced;
         public readonly IReadOnlyList<Group> Groups;
-        public readonly IReadOnlySet<int> PossiblyValid;
+        public readonly IReadOnlyCollection<int> PossiblyValid;
         public readonly IReadOnlyList<Whole> Wholes;
 
         private readonly EmojiNode EmojiRoot = new();
@@ -97,7 +99,7 @@ namespace adraffy
             ShouldEscape = dec.ReadSet();
             Ignored = dec.ReadSet();
             CombiningMarks = dec.ReadSet();
-            NonSpacingMarkMax = dec.ReadUnsigned();
+            MaxNonSpacingMarks = dec.ReadUnsigned();
             NonSpacingMarks = dec.ReadSet();
             NFCCheck = dec.ReadSet();
             Fenced = DecodeNamedCodepoints(dec);
@@ -254,15 +256,13 @@ namespace adraffy
         // throws
         public string Normalize(string name)
         {
-            return Transform(name, cps => {
-                return NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Normalized), out _, out _);
-            });
+            return Transform(name, cps => NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Normalized), out _));
         }
         // throws
         public string Beautify(string name)
         {
             return Transform(name, cps => {
-                int[] norm = NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Beautified), out _, out var g);
+                int[] norm = NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Beautified), out var g);
                 if (g != GREEK)
                 {
                     for (int i = 0, e = norm.Length; i < e; i++)
@@ -274,12 +274,10 @@ namespace adraffy
                 return norm;
             });
         }
-        // only throws DisallowedCharacterException
+        // only throws InvalidLabelException w/DisallowedCharacterException
         public string NormalizeFragment(string name, bool decompose = false)
         {
-            return Transform(name, cps => {
-                return OutputTokenize(cps, decompose ? NF.NFD : NF.NFC, e => e.Normalized).SelectMany(t => t.Codepoints);
-            });
+            return Transform(name, cps => OutputTokenize(cps, decompose ? NF.NFD : NF.NFC, e => e.Normalized).SelectMany(t => t.Codepoints));
         }
 
         string Transform(string name, Func<int[], IEnumerable<int>> fn)
@@ -314,8 +312,8 @@ namespace adraffy
             try
             {
                 tokens = OutputTokenize(input, NF.NFC, e => e.Normalized.ToArray()); // force a copy since we are exposing
-                int[] norm = NormalizedLabelFromTokens(tokens, out var kind, out var g);
-                return new Label(input, tokens, norm, kind, g);
+                int[] norm = NormalizedLabelFromTokens(tokens, out var g);
+                return new Label(input, tokens, norm, g);
             }
             catch (NormException e)
             {
@@ -323,7 +321,7 @@ namespace adraffy
             }
         }
 
-        int[] NormalizedLabelFromTokens(IReadOnlyList<OutputToken> tokens, out string kind, out Group group)
+        int[] NormalizedLabelFromTokens(IReadOnlyList<OutputToken> tokens, out Group group)
         {
             if (!tokens.Any())
             {
@@ -335,16 +333,14 @@ namespace adraffy
             if (!emoji && norm.All(cp => cp < 0x80))
             {
                 CheckLabelExtension(norm);
-                group = null;
-                kind = Group.ASCII;
+                group = Group.ASCII;
                 return norm;
             }
             int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
             if (emoji && !chars.Any())
             {
-                group = null;
-                kind = Group.EMOJI;
-                return norm;                
+                group = Group.EMOJI;
+                return norm;
             }
             CheckCombiningMarks(tokens);
             CheckFenced(norm);
@@ -352,10 +348,10 @@ namespace adraffy
             group = DetermineGroup(unique)[0];
             CheckGroup(group, chars);
             CheckWhole(group, unique);
-            kind = group.Description;
             return norm;
         }
 
+        // assume: Groups.length > 1
         IReadOnlyList<Group> DetermineGroup(IReadOnlyList<int> unique)
         {
             IReadOnlyList<Group> prev = Groups;
@@ -365,10 +361,15 @@ namespace adraffy
                 {   
                     if (prev == Groups)
                     {
+                        // the character was composed of valid parts
+                        // but it's NFC form is invalid
                         throw new DisallowedCharacterException(SafeCodepoint(cp), cp);
                     }
                     else
                     {
+                        // there is no group that contains all these characters
+                        // throw using the highest priority group that matched
+                        // https://www.unicode.org/reports/tr39/#mixed_script_confusables
                         throw CreateMixtureException(prev[0], cp);
                     }
                 }                
@@ -408,16 +409,13 @@ namespace adraffy
                             }
                         }
                         int n = j - i;
-                        if (n > NonSpacingMarkMax) {
-                            throw new NormException("excessive non-spacing marks", $"{ResetBidi(SafeImplode(decomposed.GetRange(i - 1, n)))} ({n}/${NonSpacingMarkMax})");
+                        if (n > MaxNonSpacingMarks) {
+                            throw new NormException("excessive non-spacing marks", $"{ResetBidi(SafeImplode(decomposed.GetRange(i - 1, n)))} ({n}/${MaxNonSpacingMarks})");
 				        }
 				        i = j;
                     }
-
                 }
-
             }
-
         }
 
         void CheckWhole(Group g, IReadOnlyList<int> unique)
@@ -478,25 +476,22 @@ namespace adraffy
             }
         }
 
+        // find the longest emoji that matches at index
+        // if found, returns and updates the index
         EmojiSequence FindEmoji(IReadOnlyList<int> cps, ref int index)
         {
             EmojiNode node = EmojiRoot;
             EmojiSequence last = null;
-            int i = index;
-            while (i < cps.Count)
+            for (int i = index; i < cps.Count; )
             {
-                int cp = cps[i++];
-                if (node.Dict == null || !node.Dict.TryGetValue(cp, out node))
+                if (node.Dict == null || !node.Dict.TryGetValue(cps[i++], out node)) break;
+                if (node.Emoji != null) // the emoji is valid
                 {
-                    break;
-                }
-                if (node.Emoji != null)
-                {
-                    index = i;
-                    last = node.Emoji;
+                    index = i; // eat the emoji
+                    last = node.Emoji; // save it
                 }
             }
-            return last;
+            return last; // last emoji found
         }
 
         List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, int[]> emojiStyler)
@@ -506,14 +501,14 @@ namespace adraffy
             for (int i = 0, e = cps.Count; i < e; )
             {
                 EmojiSequence emoji = FindEmoji(cps, ref i);
-                if (emoji != null)
+                if (emoji != null) // found an emoji
                 {
-                    if (buf.Any())
+                    if (buf.Any()) // consume buffered
                     {
                         tokens.Add(new OutputToken(nf(buf).ToArray(), null));
                         buf.Clear();
                     }
-                    tokens.Add(new OutputToken(emojiStyler(emoji), emoji));
+                    tokens.Add(new OutputToken(emojiStyler(emoji), emoji)); // add emoji
                 }
                 else
                 {
@@ -532,14 +527,13 @@ namespace adraffy
                     }
                 }
             }
-            if (buf.Any())
+            if (buf.Any()) // flush buffered
             {
                 tokens.Add(new OutputToken(nf(buf).ToArray(), null));
             }
             return tokens;
         }
-
-
+        // assume: cps.length > 0
         void CheckFenced(IReadOnlyList<int> cps)
         {
             if (Fenced.TryGetValue(cps[0], out var name))
@@ -566,7 +560,6 @@ namespace adraffy
                 throw new NormException($"trailing fenced", prev);
             }
         }
-        
         void CheckCombiningMarks(IReadOnlyList<OutputToken> tokens)
         {
             for (int i = 0, e = tokens.Count; i < e; i++)
@@ -585,7 +578,6 @@ namespace adraffy
                 }
             }
         }
-
         // assume: ascii
         static void CheckLabelExtension(IReadOnlyList<int> cps)
         {
@@ -595,7 +587,6 @@ namespace adraffy
                 throw new NormException("invalid label extension", cps.Take(4).Implode());
             }
         }
-        
         static void CheckLeadingUnderscore(IReadOnlyList<int> cps)
         {
             const int UNDERSCORE = 0x5F;
@@ -618,7 +609,6 @@ namespace adraffy
                 }
             }
         }
-
         private IllegalMixtureException CreateMixtureException(Group g, int cp)
         {
             string conflict = SafeCodepoint(cp);
@@ -629,8 +619,6 @@ namespace adraffy
             }
             return new IllegalMixtureException($"{g.Description} + {conflict}", cp, g, other);
         }
-
-        
     }
 
 }

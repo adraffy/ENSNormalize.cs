@@ -4,7 +4,7 @@
     "net7.0": {
       "ENS/1.0.0": {
         "type": "project",
-        "framework": ".NETCoreApp,Version=v7.0",
+        "framework": ".NETFramework,Version=v4.6.1",
         "compile": {
           "bin/placeholder/ENS.dll": {}
         },
@@ -27,7 +27,8 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\raffy\\.nuget\\packages\\": {}
+    "C:\\Users\\raffy\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
@@ -38,6 +39,9 @@
       "packagesPath": "C:\\Users\\raffy\\.nuget\\packages\\",
       "outputPath": "N:\\code\\ENSNormalize.cs\\Test\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
       "configFilePaths": [
         "C:\\Users\\raffy\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"

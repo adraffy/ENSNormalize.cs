@@ -1,4 +1,6 @@
-﻿namespace adraffy
+﻿using System;
+
+namespace adraffy
 {
     public class InvalidLabelException : Exception
     {
