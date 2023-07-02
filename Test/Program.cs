@@ -2,17 +2,16 @@
 using System.Text.Json;
 using adraffy;
 
-ENSIP15 impl = ENSNormalize.ENSIP15;
-
 TestNF(ENSNormalize.NF);
 TestENSIP15(ENSNormalize.ENSIP15);
 
-foreach (Group g in impl.Groups)
+foreach (Group g in ENSNormalize.ENSIP15.Groups)
 {
     Console.WriteLine($"{g.Description} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
 }
 
-//Console.WriteLine(impl.NF.NFC("e\u0300").ToHexSequence());
+Console.WriteLine(ENSNormalize.NF.NFC("e\u0300").ToHexSequence());
+Console.WriteLine(ENSNormalize.NF.NFD("\u00E8").ToHexSequence());
 
 DumpSplit("RAFFY.eTh");
 DumpSplit("xn--💩.eth");
@@ -20,12 +19,14 @@ DumpSplit("бургер");
 DumpSplit("☝\uFE0F🏻");
 DumpSplit("💩Raffy.eth_");
 
-DumpLabel(impl.NormalizeLabel("."));
+DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("."));
 
 // readme
-Console.WriteLine(adraffy.ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh").ToHexSequence());
-Console.WriteLine(adraffy.ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth").ToHexSequence());
-
+Console.WriteLine(ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh").ToHexSequence());
+Console.WriteLine(ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth").ToHexSequence());
+Console.WriteLine(ENSNormalize.ENSIP15.SafeCodepoint(0x303));
+Console.WriteLine(ENSNormalize.ENSIP15.SafeImplode(new int[] { 0x303, 0xFE0F }).ToHexSequence());
+Console.WriteLine(ENSNormalize.ENSIP15.ShouldEscape.Contains(0x202E));
 
 void DumpSplit(string name)
 {

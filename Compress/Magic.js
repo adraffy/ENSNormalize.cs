@@ -15,6 +15,9 @@ export class Magic {
 			return {w, n, a};
 		});
 	}
+	get widths() {
+		return this.m.map(x => x.w);
+	}
 	write(enc, x) {
 		require_unsigned(x);
 		for (let i = 0, {m} = this, last = m.length - 1; i <= last; i++) {
@@ -38,8 +41,8 @@ export class Magic {
 	}
 	bytes_from_symbols(symbols) {
 		let w = new BitWriter();
-		for (let x of this.m) {
-			w.binary(x.w, MAGIC_BITS);
+		for (let x of this.widths) {
+			w.binary(x, MAGIC_BITS);
 		}
 		w.binary(0, MAGIC_BITS);
 		for (let x of symbols) {

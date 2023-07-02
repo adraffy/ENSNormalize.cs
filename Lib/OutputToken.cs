@@ -2,11 +2,12 @@
 {
     public class OutputToken
     {
-        public readonly bool IsEmoji;
         public readonly int[] Codepoints;
-        public OutputToken(bool emoji, int[] cps)
+        public readonly EmojiSequence Emoji; // nullable
+        public bool IsEmoji { get => Emoji != null; }
+        public OutputToken(int[] cps, EmojiSequence emoji)
         {
-            IsEmoji = emoji;
+            Emoji = emoji;
             Codepoints = cps;
         }
         public override string ToString() 

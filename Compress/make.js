@@ -76,16 +76,16 @@ for (let x of SPEC.wholes) {
 }
 w2.unique([]);
 
-//let [magic1, bytes1] = Magic.optimize(w1.symbols);
-//let [magic2, bytes2] = Magic.optimize(w2.symbols);
+let [magic1, bytes1] = Magic.optimize(w1.symbols);
+let [magic2, bytes2] = Magic.optimize(w2.symbols);
 
-let magic1 = new Magic([ 2, 6, 8, 12, 15, 19 ]);
-let magic2 = new Magic([ 1, 3, 7, 13, 16, 20 ]);
-let bytes1 = magic1.bytes_from_symbols(w1.symbols);
-let bytes2 = magic2.bytes_from_symbols(w2.symbols);
+// let magic1 = new Magic([ 2, 6, 8, 12, 15, 19 ]);
+// let magic2 = new Magic([ 1, 3, 7, 13, 16, 20 ]);
+// let bytes1 = magic1.bytes_from_symbols(w1.symbols);
+// let bytes2 = magic2.bytes_from_symbols(w2.symbols);
 
-console.log(bytes1.length);
-console.log(bytes2.length);
+console.log(`NF ${bytes1.length} using ${magic1.widths}`);
+console.log(`Spec: ${bytes2.length} using ${magic2.widths}`);
 
 writeFileSync(join(BASE_DIR, '../Lib/Resources/nf.bin'), bytes1);
 writeFileSync(join(BASE_DIR, '../Lib/Resources/spec.bin'), bytes2);

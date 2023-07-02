@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection.Emit;
+using System.Text;
 
 namespace adraffy
 {
@@ -13,13 +14,12 @@ namespace adraffy
             return Dict[cp] = new();
         }
     }
-    
+
     internal class Extent
     {
         internal readonly HashSet<Group> Groups = new();
         internal readonly List<int> Chars = new();
     }
-    
 
     public class ENSIP15
     {
@@ -27,7 +27,7 @@ namespace adraffy
 
         public readonly NF NF;
         public readonly int NonSpacingMarkMax;
-        public readonly IReadOnlyList<EmojiSequence> Emoji;
+        public readonly IReadOnlyList<EmojiSequence> Emojis;
         public readonly IReadOnlySet<int> Ignored;
         public readonly IReadOnlySet<int> CombiningMarks;
         public readonly IReadOnlySet<int> NonSpacingMarks;
@@ -103,7 +103,7 @@ namespace adraffy
             Fenced = DecodeNamedCodepoints(dec);
             Mapped = DecodeMapped(dec);
             Groups = DecodeGroups(dec);
-            Emoji = dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToList();
+            Emojis = dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToList();
 
             // precompute: greek
             GREEK = Groups.FirstOrDefault(g => g.Name == "Greek");
@@ -149,7 +149,7 @@ namespace adraffy
             Wholes = wholes.ToArray();
 
             // precompute: emoji trie
-            foreach (EmojiSequence emoji in Emoji)
+            foreach (EmojiSequence emoji in Emojis)
             {
                 List<EmojiNode> nodes = new() { EmojiRoot };
                 foreach (int cp in emoji.Beautified)
@@ -232,7 +232,7 @@ namespace adraffy
         // assume: cps.length > 0
         public string SafeImplode(IReadOnlyList<int> cps)
         {
-            StringBuilder sb = new(cps.Count + 16);
+            StringBuilder sb = new(cps.Count + 16); // guess
             if (cps.Any() && CombiningMarks.Contains(cps[0]))
             {
                 sb.AppendCodepoint(0x25CC);
@@ -254,27 +254,35 @@ namespace adraffy
         // throws
         public string Normalize(string name)
         {
-            StringBuilder sb = new(name.Length + 16);
-            foreach (string label in name.Split(STOP_CH))
-            {
-                int[] cps = label.Explode().ToArray();
-                try
-                {
-                    List<OutputToken> tokens = OutputTokenize(cps, NF.NFC, e => e.Normalized);
-                    IReadOnlyList<int> norm = NormalizedLabelFromTokens(tokens, out _, out _);
-                    if (sb.Length > 0) sb.Append(STOP_CH);
-                    sb.AppendCodepoints(norm);
-                }
-                catch (NormException e)
-                {
-                    throw new InvalidLabelException(label, $"Invalid label \"{SafeImplode(cps)}\": {e.Message}", e);
-                }
-            }
-            return sb.ToString();
+            return Transform(name, cps => {
+                return NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Normalized), out _, out _);
+            });
         }
-
         // throws
         public string Beautify(string name)
+        {
+            return Transform(name, cps => {
+                int[] norm = NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Beautified), out _, out var g);
+                if (g != GREEK)
+                {
+                    for (int i = 0, e = norm.Length; i < e; i++)
+                    {
+                        // ξ => Ξ if not greek
+                        if (norm[i] == 0x3BE) norm[i] = 0x39E;
+                    }
+                }
+                return norm;
+            });
+        }
+        // only throws DisallowedCharacterException
+        public string NormalizeFragment(string name, bool decompose = false)
+        {
+            return Transform(name, cps => {
+                return OutputTokenize(cps, decompose ? NF.NFD : NF.NFC, e => e.Normalized).SelectMany(t => t.Codepoints);
+            });
+        }
+
+        string Transform(string name, Func<int[], IEnumerable<int>> fn)
         {
             StringBuilder sb = new(name.Length + 16);
             foreach (string label in name.Split(STOP_CH))
@@ -282,20 +290,8 @@ namespace adraffy
                 int[] cps = label.Explode().ToArray();
                 try
                 {
-                    List<OutputToken> tokens = OutputTokenize(cps, NF.NFC, e => e.Beautified);
-                    int[] norm = NormalizedLabelFromTokens(tokens, out _, out var g);
                     if (sb.Length > 0) sb.Append(STOP_CH);
-                    if (GREEK != g)
-                    {
-                        for (int i = 0, e = norm.Length; i < e; i++)
-                        {
-                            if (norm[i] == 0x3BE)
-                            {
-                                norm[i] = 0x39E;
-                            }
-                        }
-                    }
-                    sb.AppendCodepoints(norm);
+                    sb.AppendCodepoints(fn(cps));
                 }
                 catch (NormException e)
                 {
@@ -305,7 +301,8 @@ namespace adraffy
             return sb.ToString();
         }
 
-        // doesn't throw
+
+        // never throws
         public Label[] Split(string name)
         {
             return name.Split(STOP_CH).Select(NormalizeLabel).ToArray();
@@ -339,14 +336,14 @@ namespace adraffy
             {
                 CheckLabelExtension(norm);
                 group = null;
-                kind = "ASCII";
+                kind = Group.ASCII;
                 return norm;
             }
             int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
             if (emoji && !chars.Any())
             {
                 group = null;
-                kind = "Emoji";
+                kind = Group.EMOJI;
                 return norm;                
             }
             CheckCombiningMarks(tokens);
@@ -513,10 +510,10 @@ namespace adraffy
                 {
                     if (buf.Any())
                     {
-                        tokens.Add(new OutputToken(false, nf(buf).ToArray()));
+                        tokens.Add(new OutputToken(nf(buf).ToArray(), null));
                         buf.Clear();
                     }
-                    tokens.Add(new OutputToken(true, emojiStyler(emoji)));
+                    tokens.Add(new OutputToken(emojiStyler(emoji), emoji));
                 }
                 else
                 {
@@ -537,7 +534,7 @@ namespace adraffy
             }
             if (buf.Any())
             {
-                tokens.Add(new OutputToken(false, nf(buf).ToArray()));
+                tokens.Add(new OutputToken(nf(buf).ToArray(), null));
             }
             return tokens;
         }
@@ -630,7 +627,7 @@ namespace adraffy
             {
                 conflict = $"{other.Description} {conflict}";
             }
-            return new IllegalMixtureException($"{g.Description} + {conflict}", g, cp, other);
+            return new IllegalMixtureException($"{g.Description} + {conflict}", cp, g, other);
         }
 
         

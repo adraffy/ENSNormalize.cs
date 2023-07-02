@@ -2,12 +2,15 @@
 {
     public class Label
     {
+        // error: [Input, Tokens?, Error ]
+        // valid: [Input, Tokens, Kind, Group?, Normalized ]
+
         public readonly IReadOnlyList<int> Input;
-        public readonly IReadOnlyList<OutputToken> Tokens;
-        public readonly NormException Error;
-        public readonly IReadOnlyList<int> Normalized;
-        public readonly string Kind;
-        public readonly Group Group;
+        public readonly IReadOnlyList<OutputToken> Tokens; // nullable
+        public readonly NormException Error; // nullable
+        public readonly IReadOnlyList<int> Normalized; // nullable
+        public readonly string Kind; // nullable
+        public readonly Group Group; // nullable
 
         internal Label(int[] input, List<OutputToken> tokens, NormException e) {
             Input = input;

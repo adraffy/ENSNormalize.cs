@@ -2,6 +2,9 @@
 {
     public class Group
     {
+        public static readonly string ASCII = "ASCII";
+        public static readonly string EMOJI = "Emoji";
+
         public readonly int Index;
         public readonly string Name;
         public readonly string Description;
@@ -9,7 +12,7 @@
         public readonly IReadOnlySet<int> Primary;
         public readonly IReadOnlySet<int> Secondary;
         public readonly bool CMWhitelisted;
-        internal Group(int index,  string name, bool restricted, bool cm, IEnumerable<int> primary, IEnumerable<int> secondary)
+        internal Group(int index, string name, bool restricted, bool cm, IEnumerable<int> primary, IEnumerable<int> secondary)
         {
             Index = index;
             Name = name;
