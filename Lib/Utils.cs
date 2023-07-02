@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -9,9 +7,9 @@ namespace adraffy
     public static class Utils
     {
         const int UTF16_BMP = 0x10000;
-        const int UTF16_HEAD = 0xFC00; // upper 6 bits
         const int UTF16_BITS = 10;
-        const int UTF16_DATA = (1 << UTF16_BITS) - 1; // lower 10 bits
+        const int UTF16_HEAD = ~0 << UTF16_BITS;    // upper 6 bits
+        const int UTF16_DATA = (1 << UTF16_BITS)-1; // lower 10 bits
         const int UTF16_HI = 0xD800; // 110110*
         const int UTF16_LO = 0xDC00; // 110111*
 
