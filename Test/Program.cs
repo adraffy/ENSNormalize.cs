@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using adraffy;
 
+TestCodepoints();
 TestNF(ENSNormalize.NF);
 TestENSIP15(ENSNormalize.ENSIP15);
 
@@ -63,7 +65,18 @@ void DumpLabel(Label label)
         Console.Write($" \"{label.Error.Message}\"");
     }
     Console.WriteLine();
-
+}
+void TestCodepoints()
+{
+    StringBuilder sb = new();
+    for (int cp = 0; cp < 0x110000; cp++)
+    {
+        //if (cp >= 0xD800 || cp <= 0xDFFF) continue;
+        sb.Clear();
+        sb.AppendCodepoint(cp);
+        int[] cps = sb.ToString().Explode().ToArray();
+        if (cps.Length != 1 || cps[0] != cp) throw new Exception($"wrong {cp} vs {cps[0]}");
+    }
 }
 int TestENSIP15(ENSIP15 impl)
 {
