@@ -11,8 +11,8 @@ namespace adraffy
         internal Whole() { }
         internal Whole(List<int> valid, List<int> confused)
         {
-            Valid = new HashSet<int>(valid);
-            Confused = new HashSet<int>(confused);
+            Valid = (IReadOnlyCollection<int>)new HashSet<int>(valid);
+            Confused = (IReadOnlyCollection<int>)new HashSet<int>(confused);
         }
     }
 }

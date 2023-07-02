@@ -4,7 +4,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {Encoder} from './Encoder.js';
 import {Magic} from './Magic.js';
 import {
-	compare_arrays, transpose, group_by, collect_while,
+	compare_arrays, transpose, group_by, collect_while, same, partition, 
 	read_unique, read_unsorted_deltas, read_sorted_ascending, read_tree, read_str
 } from './utils.js';
 
@@ -76,23 +76,52 @@ for (let x of SPEC.wholes) {
 }
 w2.unique([]);
 
-let [magic1, bytes1] = Magic.optimize(w1.symbols);
-let [magic2, bytes2] = Magic.optimize(w2.symbols);
+let magic1 = new Magic([ 2, 6, 8, 12, 15, 19 ]);
+let magic2 = new Magic([ 1, 3, 7, 13, 16, 20 ]);
+let bytes1 = magic1.bytes_from_symbols(w1.symbols);
+let bytes2 = magic2.bytes_from_symbols(w2.symbols);
 
-// let magic1 = new Magic([ 2, 6, 8, 12, 15, 19 ]);
-// let magic2 = new Magic([ 1, 3, 7, 13, 16, 20 ]);
-// let bytes1 = magic1.bytes_from_symbols(w1.symbols);
-// let bytes2 = magic2.bytes_from_symbols(w2.symbols);
+if (0) {
+	[magic1, bytes1] = Magic.optimize(w1.symbols);
+	[magic2, bytes2] = Magic.optimize(w2.symbols);
+}
 
 console.log(`NF ${bytes1.length} using ${magic1.widths}`);
 console.log(`Spec: ${bytes2.length} using ${magic2.widths}`);
 
-writeFileSync(join(BASE_DIR, '../Lib/Resources/nf.bin'), bytes1);
-writeFileSync(join(BASE_DIR, '../Lib/Resources/spec.bin'), bytes2);
+//writeFileSync(join(BASE_DIR, '../Lib/Resources/nf.bin'), bytes1);
+//writeFileSync(join(BASE_DIR, '../Lib/Resources/spec.bin'), bytes2);
 
-function same(a, b) {
-	return JSON.stringify(a) === JSON.stringify(b);
+// TODO: fix me
+function u32s(buf) {
+	if (buf.length & 3) {
+		buf = Buffer.concat([buf, new Uint8Array(4 - (buf.length & 3))]);
+	}
+	let v = [];
+	for (let i = 0; i < buf.length; i += 4) {
+		v.push(buf.readUInt32LE(i));
+	}
+	return v;
 }
+function items(v, inset) {
+	return partition(u32s(v), 10).map(v => inset + v.map(x => `0x${x.toString(16).toUpperCase().padStart(8, '0')},`).join(''));
+}
+writeFileSync(join(BASE_DIR, '../Lib/Blobs.cs'), [
+	`// generated ${new Date().toISOString()}`,
+	'namespace adraffy',
+	'{',
+	`    internal static class Blobs`,
+    `    {`,
+    `        internal static readonly uint[] NF = new uint[] {`,
+	...items(bytes1, '            '),
+	`        };`,
+	`        internal static readonly uint[] ENSIP15 = new uint[] {`,	
+	...items(bytes2, '            '),
+	`        };`,
+	`    }`,
+    `}`,
+].join('\n'));
+
 
 const r1 = Magic.reader_from_bytes(bytes1);
 console.log(read_str(r1));

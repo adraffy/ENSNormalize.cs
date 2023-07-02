@@ -37,8 +37,8 @@ namespace adraffy
             Description = restricted ? $"Restricted[{Name}]" : Name;
             Kind = restricted ? GroupKind.Script : GroupKind.Restricted;
             CMWhitelisted = cm;
-            Primary = new HashSet<int>(primary); 
-            Secondary = new HashSet<int>(secondary);
+            Primary = (IReadOnlyCollection<int>)new HashSet<int>(primary); 
+            Secondary = (IReadOnlyCollection<int>)new HashSet<int>(secondary);
         }
         public bool Contains(int cp)
         {

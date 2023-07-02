@@ -1,8 +1,17 @@
 {
   "version": 2,
-  "dgSpecHash": "HUvSwnKWUoAnPTZscQlMs45e4jI5RrrfMqjSJ4VQCTKOFg4c29PXnSxK08WBTRl1Gofl2keUeQ5O0ZnZuhapAw==",
+  "dgSpecHash": "8TGO/r45tDtMs6qy7rAonIFPqBD1p8Q1aHXDgwfbC6IO17C4AWt03hxUAr5ng9qA0qiwgwgKYzdTQ9HsZv9dhQ==",
   "success": true,
   "projectFilePath": "N:\\code\\ENSNormalize.cs\\Test\\Test.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\raffy\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\7.0.0\\microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.text.encodings.web\\7.0.0\\system.text.encodings.web.7.0.0.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.text.json\\7.0.3\\system.text.json.7.0.3.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512"
+  ],
   "logs": []
 }

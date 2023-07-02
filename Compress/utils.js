@@ -22,6 +22,18 @@ export function split_between(v, fn) {
 	return ret;
 }
 
+export function same(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export function partition(v, n) {
+	let m = [];
+	for (let i = 0; i < v.length; i += n) {
+		m.push(v.slice(i, i + n));
+	}
+	return m; 
+}
+
 export function group_by(v, fn) {
 	let map = new Map();
 	for (let x of v) {

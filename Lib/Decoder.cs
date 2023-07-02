@@ -8,19 +8,32 @@ namespace adraffy
     {
         static int AsSigned(int i)
         {
-            return (i & 1) > 0 ? ~i >> 1 : i >> 1;
+            return (i & 1) != 0 ? ~i >> 1 : i >> 1;
         }
 
-        private readonly byte[] Bytes;
+        private readonly uint[] Words;
         private readonly int[] Magic;
-        private int Index, Byte, Bits;
-        public Decoder(byte[] v) {
-            Bytes = v;
+        private int Index, Bits;
+        private uint Word;
+        public Decoder(uint[] words) {
+            Words = words;
             Index = 0;
-            Byte = 0;
+            Word = 0;
             Bits = 0;
             Magic = ReadMagic();
-        }        
+        }
+        public bool ReadBit()
+        {
+            if (Bits == 0)
+            {
+                Word = Words[Index++];
+                Bits = 32;
+            }
+            bool bit = (Word & 1) != 0;
+            Word >>= 1;
+            Bits--;
+            return bit;
+        }
         private int[] ReadMagic()
         {
             List<int> magic = new();
@@ -31,18 +44,6 @@ namespace adraffy
                 magic.Add(w);
             }
             return magic.ToArray();
-        }
-        public bool ReadBit()
-        {
-            if (Bits == 0)
-            {
-                Byte = Bytes[Index++];
-                Bits = 8;
-            }
-            bool bit = (Byte & 1) > 0;
-            Byte >>= 1;
-            Bits--;
-            return bit;
         }
         public int ReadBinary(int w)
         {

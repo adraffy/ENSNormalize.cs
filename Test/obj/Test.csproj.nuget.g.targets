@@ -1,2 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" />
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Condition=" '$(TargetFramework)' == 'net461' AND '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)system.text.encodings.web\7.0.0\buildTransitive\net461\System.Text.Encodings.Web.targets" Condition="Exists('$(NuGetPackageRoot)system.text.encodings.web\7.0.0\buildTransitive\net461\System.Text.Encodings.Web.targets')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.bcl.asyncinterfaces\7.0.0\buildTransitive\net461\Microsoft.Bcl.AsyncInterfaces.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.bcl.asyncinterfaces\7.0.0\buildTransitive\net461\Microsoft.Bcl.AsyncInterfaces.targets')" />
+    <Import Project="$(NuGetPackageRoot)system.text.json\7.0.3\buildTransitive\net461\System.Text.Json.targets" Condition="Exists('$(NuGetPackageRoot)system.text.json\7.0.3\buildTransitive\net461\System.Text.Json.targets')" />
+  </ImportGroup>
+  <ImportGroup Condition=" '$(TargetFramework)' == 'net5.0' AND '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)system.text.encodings.web\7.0.0\buildTransitive\netcoreapp2.0\System.Text.Encodings.Web.targets" Condition="Exists('$(NuGetPackageRoot)system.text.encodings.web\7.0.0\buildTransitive\netcoreapp2.0\System.Text.Encodings.Web.targets')" />
+    <Import Project="$(NuGetPackageRoot)system.text.json\7.0.3\buildTransitive\netcoreapp2.0\System.Text.Json.targets" Condition="Exists('$(NuGetPackageRoot)system.text.json\7.0.3\buildTransitive\netcoreapp2.0\System.Text.Json.targets')" />
+  </ImportGroup>
+  <ImportGroup Condition=" '$(TargetFramework)' == 'net7.0' AND '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)system.text.json\7.0.3\buildTransitive\net6.0\System.Text.Json.targets" Condition="Exists('$(NuGetPackageRoot)system.text.json\7.0.3\buildTransitive\net6.0\System.Text.Json.targets')" />
+  </ImportGroup>
+</Project>

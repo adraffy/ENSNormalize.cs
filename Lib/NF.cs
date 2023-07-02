@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace adraffy
@@ -48,6 +49,7 @@ namespace adraffy
         public NF(Decoder dec)
         {
             UnicodeVersion = dec.ReadString();
+            Debug.WriteLine(UnicodeVersion);
             Exclusions = new(dec.ReadUnique());
             QuickCheck = new(dec.ReadUnique());
             int[] decomp1 = dec.ReadSortedUnique();
@@ -264,7 +266,7 @@ namespace adraffy
         // primary
         public List<int> NFD(IEnumerable<int> cps) 
         {
-            return Decomposed(cps).ConvertAll(UnpackCP);
+            return Decomposed(cps).Select(UnpackCP).ToList();
         }
 
         public List<int> NFC(IEnumerable<int> cps)

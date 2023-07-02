@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -23,7 +22,7 @@ namespace adraffy
         static public IEnumerable<int> Explode(this string s)
         {         
             int n = s.Length;
-            if (n == 0) return Array.Empty<int>();
+            if (n == 0) return new int[] { 0 };
             List<int> v = new(n);
             for (int i = 0; i < n; )
             {

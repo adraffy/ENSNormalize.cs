@@ -30,15 +30,16 @@ namespace adraffy
         public readonly NF NF;
         public readonly int MaxNonSpacingMarks;
         public readonly IReadOnlyList<EmojiSequence> Emojis;
+
         public readonly IReadOnlyCollection<int> Ignored;
         public readonly IReadOnlyCollection<int> CombiningMarks;
         public readonly IReadOnlyCollection<int> NonSpacingMarks;
         public readonly IReadOnlyCollection<int> ShouldEscape;
         public readonly IReadOnlyCollection<int> NFCCheck;
+        public readonly IReadOnlyCollection<int> PossiblyValid;
         public readonly IReadOnlyDictionary<int, IReadOnlyList<int>> Mapped;
         public readonly IReadOnlyDictionary<int, string> Fenced;
         public readonly IReadOnlyList<Group> Groups;
-        public readonly IReadOnlyCollection<int> PossiblyValid;
         public readonly IReadOnlyList<Whole> Wholes;
 
         private readonly EmojiNode EmojiRoot = new();
@@ -84,7 +85,7 @@ namespace adraffy
             while (true)
             {
                 string name = dec.ReadString();
-                if (!name.Any()) break;
+                if (name.Length == 0) break;
                 int bits = dec.ReadUnsigned();
                 bool restricted = (bits & 1) > 0;
                 bool cm = (bits & 2) > 0;
@@ -96,12 +97,12 @@ namespace adraffy
         public ENSIP15(NF nf, Decoder dec)
         {
             NF = nf;
-            ShouldEscape = dec.ReadSet();
-            Ignored = dec.ReadSet();
-            CombiningMarks = dec.ReadSet();
+            ShouldEscape = (IReadOnlyCollection<int>)dec.ReadSet();
+            Ignored = (IReadOnlyCollection<int>)dec.ReadSet();
+            CombiningMarks = (IReadOnlyCollection<int>)dec.ReadSet();
             MaxNonSpacingMarks = dec.ReadUnsigned();
-            NonSpacingMarks = dec.ReadSet();
-            NFCCheck = dec.ReadSet();
+            NonSpacingMarks = (IReadOnlyCollection<int>)dec.ReadSet();
+            NFCCheck = (IReadOnlyCollection<int>)dec.ReadSet();
             Fenced = DecodeNamedCodepoints(dec);
             Mapped = DecodeMapped(dec);
             Groups = DecodeGroups(dec);
@@ -195,7 +196,7 @@ namespace adraffy
                 }
             }
             union.UnionWith(NF.NFD(union));
-            PossiblyValid = union;
+            PossiblyValid = (IReadOnlyCollection<int>)union;
 
             // precompute: unique non-confusables
             HashSet<int> unique = new(union);

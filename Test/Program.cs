@@ -5,6 +5,8 @@ using adraffy;
 TestNF(ENSNormalize.NF);
 TestENSIP15(ENSNormalize.ENSIP15);
 
+ENSNormalize.ENSIP15.Normalize("a");
+
 foreach (Group g in ENSNormalize.ENSIP15.Groups)
 {
     Console.WriteLine($"{g.Index + 1}. {g.Description} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
@@ -50,7 +52,7 @@ void DumpLabel(Label label)
     Console.Write($"[{label.Input.ToHexSequence()}]");
     if (label.Tokens != null)
     {
-        Console.Write($" <{string.Join('+', label.Tokens.Select(t => t.ToString()))}>");
+        Console.Write($" <{string.Join("+", label.Tokens.Select(t => t.ToString()))}>");
     }
     if (label.Error == null)
     {
