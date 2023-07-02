@@ -4,8 +4,7 @@
 * Reference Implementation: [@adraffy/ens-normalize.js](https://github.com/adraffy/ens-normalize.js)
 * Passes **100%** Validation Tests
 * Space Efficient: `.dll` under `60KB`
-	* [Resources](./Lib/Resources/) via [make.js](./Compress/make.js)
-
+	* Inline [Blobs](./Lib/Blobs.cs) via [make.js](./Compress/make.js)
 
 ```c#
 // globals
@@ -18,12 +17,10 @@ adraffy.ENSNormalize.NF      // NFC/NFD
 ```c#
 // string -> string
 // throws on invalid names
-Console.WriteLine(ENSIP15.Normalize("RaFFY🚴‍♂️.eTh"));
-// "raffy🚴‍♂.eth"
+ENSIP15.Normalize("RaFFY🚴‍♂️.eTh"); // "raffy🚴‍♂.eth"
 
 // works like Normalize()
-Console.WriteLine(ENSIP15.Beautify("1⃣2⃣.eth")); 
-// "1️⃣2️⃣.eth"
+ENSIP15.Beautify("1⃣2⃣.eth"); // "1️⃣2️⃣.eth"
 ```
 ### Output-based tokenization: [Label](./Lib/Label.cs)
 
@@ -98,3 +95,12 @@ ENSIP15.ShouldEscape.Contains(0x202E); // true
 * `"illegal mixture"`
 * `"whole-script confusable"`
 * `"disallowed character"`
+
+### Unicode Normalization Forms: [NF](./Lib/NF.cs)
+
+```c#
+// string -> string 
+// IEnumerable<int> -> int[]
+NF.NFC("e\u0300"); // [E5]
+NF.NFD("\u00E5");  // [65 300]
+```

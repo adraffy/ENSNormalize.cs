@@ -7,11 +7,13 @@ import {
 	compare_arrays, transpose, group_by, collect_while, same, partition, 
 	read_unique, read_unsorted_deltas, read_sorted_ascending, read_tree, read_str
 } from './utils.js';
+import { createHash } from 'node:crypto';
 
 const BASE_DIR = fileURLToPath(new URL('.', import.meta.url));
+const SPEC_FILE = join(BASE_DIR, 'spec.json');
 
 const NF = JSON.parse(readFileSync(join(BASE_DIR, 'nf.json')));
-const SPEC = JSON.parse(readFileSync(join(BASE_DIR, 'spec.json')));
+const SPEC = JSON.parse(readFileSync(SPEC_FILE));
 
 let decomp = NF.decomp.map(x => x.flat()).sort(compare_arrays);
 let decomp1 = decomp.filter(x => x.length === 2);
@@ -107,14 +109,20 @@ function items(v, inset) {
 	return partition(u32s(v), 10).map(v => inset + v.map(x => `0x${x.toString(16).toUpperCase().padStart(8, '0')},`).join(''));
 }
 writeFileSync(join(BASE_DIR, '../Lib/Blobs.cs'), [
-	`// generated ${new Date().toISOString()}`,
+	`// generated: ${new Date().toISOString()}`,
 	'namespace adraffy',
 	'{',
 	`    internal static class Blobs`,
     `    {`,
+	`        // created: ${SPEC.created}`,
+	`        // unicode: ${SPEC.unicode}`,
+	`        // cldr: ${SPEC.cldr}`,
+	`        // hash: ${createHash('SHA256').update(readFileSync(SPEC_FILE)).digest('hex')}`,
     `        internal static readonly uint[] NF = new uint[] {`,
 	...items(bytes1, '            '),
 	`        };`,
+	`        // created: ${NF.created}`,
+	`        // unicode: ${NF.unicode}`,
 	`        internal static readonly uint[] ENSIP15 = new uint[] {`,	
 	...items(bytes2, '            '),
 	`        };`,
