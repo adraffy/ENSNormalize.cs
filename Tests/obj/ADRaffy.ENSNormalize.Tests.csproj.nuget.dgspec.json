@@ -5,7 +5,7 @@
   },
   "projects": {
     "N:\\code\\ENSNormalize.cs\\ENSNormalize\\ADRaffy.ENSNormalize.csproj": {
-      "version": "1.0.0",
+      "version": "0.1.1",
       "restore": {
         "projectUniqueName": "N:\\code\\ENSNormalize.cs\\ENSNormalize\\ADRaffy.ENSNormalize.csproj",
         "projectName": "ADRaffy.ENSNormalize",
@@ -68,6 +68,13 @@
       "frameworks": {
         "netcoreapp3.1": {
           "targetAlias": "netcoreapp3.1",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.1, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -88,6 +95,13 @@
         },
         "net5.0": {
           "targetAlias": "net5.0",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.1, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -108,15 +122,34 @@
         },
         "net451": {
           "targetAlias": "net451",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.1, )"
+            }
+          },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.305\\RuntimeIdentifierGraph.json"
         },
         "net461": {
           "targetAlias": "net461",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.1, )"
+            }
+          },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.305\\RuntimeIdentifierGraph.json"
         },
         "netstandard1.1": {
           "targetAlias": "netstandard1.1",
           "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.1, )"
+            },
             "NETStandard.Library": {
               "target": "Package",
               "version": "[1.6.1, )",
@@ -128,6 +161,11 @@
         "netstandard2.0": {
           "targetAlias": "netstandard2.0",
           "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.1, )"
+            },
             "NETStandard.Library": {
               "suppressParent": "All",
               "target": "Package",

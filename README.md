@@ -6,26 +6,25 @@
 	* Spec: [`962316964553fce6188e25a5166a4c1e906333adf53bdf2964c71dedc0f8e2c8`](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/spec.json)
 * Passes **100%** [Validation Tests](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/tests.json)
 * Passes **100%** [Normalization Tests](https://unicode.org/Public/15.0.0/ucd/NormalizationTest.txt)
-* Space Efficient: `~60KB` as [Inline Blobs](./Lib/Blobs.cs) via [make.js](./Compress/make.js)
+* Space Efficient: `~60KB` as [Inline Blobs](./ENSNormalize/Blobs.cs) via [make.js](./Compress/make.js)
 * Legacy Support: `netstandard1.1`, `net451`, `netcoreapp3.1`
 
 ```c#
-// globals
-adraffy.ENSNormalize.ENSIP15 // Main Library
-adraffy.ENSNormalize.NF      // NFC/NFD
+using ADRaffy.ENSNormalize;
+ENSNormalize.ENSIP15 // Main Library (global instance)
 ```
 
-### Primary API
+### Primary API [ENSIP15](./ENSNormalize/ENSIP15.cs)
 
 ```c#
 // string -> string
 // throws on invalid names
-ENSIP15.Normalize("RaFFY🚴‍♂️.eTh"); // "raffy🚴‍♂.eth"
+ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh"); // "raffy🚴‍♂.eth"
 
 // works like Normalize()
-ENSIP15.Beautify("1⃣2⃣.eth"); // "1️⃣2️⃣.eth"
+ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth"); // "1️⃣2️⃣.eth"
 ```
-### Output-based tokenization: [Label](./Lib/Label.cs)
+### Output-based tokenization [Label](./ENSNormalize/Label.cs)
 
 ```c#
 // string -> Label[]
@@ -58,19 +57,19 @@ Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
 
 ### Normalization Properties
 
-* [Group](./Lib/Group.cs) — `ENSIP15.Groups: IReadOnlyList<Group>`
-* [EmojiSequence](./Lib/EmojiSequence.cs) — `ENSIP15.Emojis: IReadOnlyList<EmojiSequence>`
-* [Whole](./Lib/Whole.cs) — `ENSIP15.Wholes: IReadOnlyList<Whole>`
+* [Group](./ENSNormalize/Group.cs) — `ENSIP15.Groups: IReadOnlyList<Group>`
+* [EmojiSequence](./ENSNormalize/EmojiSequence.cs) — `ENSIP15.Emojis: IReadOnlyList<EmojiSequence>`
+* [Whole](./ENSNormalize/Whole.cs) — `ENSIP15.Wholes: IReadOnlyList<Whole>`
 
 ### Error Handling
 
-All errors are safe to print. Functions that accept names as input wrap their exceptions in [InvalidLabelException](./Lib/InvalidLabelException.cs) for additional context.
+All errors are safe to print. Functions that accept names as input wrap their exceptions in [InvalidLabelException](./ENSNormalize/InvalidLabelException.cs) for additional context.
 
 #### Errors with Additional Context
-* (Base) [NormException](./Lib/NormException.cs) `{ Kind: string, Reason: string? }`
-* [DisallowedCharacterException](./Lib/DisallowedCharacterException.cs) `{ Codepoint }`
-* [ConfusableException](./Lib/ConfusableException.cs) `{ Group, OtherGroup }`
-* [IllegalMixtureException](./Lib/IllegalMixtureException.cs) `{ Codepoint, Group, OtherGroup? }`
+* (Base) [NormException](./ENSNormalize/NormException.cs) `{ Kind: string, Reason: string? }`
+* [DisallowedCharacterException](./ENSNormalize/DisallowedCharacterException.cs) `{ Codepoint }`
+* [ConfusableException](./ENSNormalize/ConfusableException.cs) `{ Group, OtherGroup }`
+* [IllegalMixtureException](./ENSNormalize/IllegalMixtureException.cs) `{ Codepoint, Group, OtherGroup? }`
 
 #### Error Kinds
 
@@ -87,15 +86,6 @@ All errors are safe to print. Functions that accept names as input wrap their ex
 * `"illegal mixture"`
 * `"whole-script confusable"`
 * `"disallowed character"`
-
-### Unicode Normalization Forms: [NF](./Lib/NF.cs)
-
-```c#
-// string -> string 
-// IEnumerable<int> -> int[]
-NF.NFC("\x65\u0300"); // [E5]
-NF.NFD("\xE5");  //  [65 300]
-```
 
 ### Utilities
 
@@ -124,5 +114,16 @@ ENSIP15.ShouldEscape.Contains(0x202E); // RIGHT-TO-LEFT OVERRIDE => true
 Determine if a character is a combining mark:
 ```c#
 // IReadOnlyCollection<int>
-ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEYCAP => true
+ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEYCAP => true
+```
+
+### Unicode Normalization Forms [NF](./ENSNormalize/NF.cs)
+
+```c#
+using ADRaffy.ENSNormalize;
+
+// string -> string 
+// IEnumerable<int> -> int[]
+ENSNormalize.NF.NFC("\x65\u0300"); // [E5]
+ENSNormalize.NF.NFD("\xE5"); // [65 300]
 ```

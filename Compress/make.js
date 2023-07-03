@@ -10,9 +10,10 @@ import {
 import { createHash } from 'node:crypto';
 
 const BASE_DIR = fileURLToPath(new URL('.', import.meta.url));
-const SPEC_FILE = join(BASE_DIR, 'spec.json');
+const DATA_DIR = join(BASE_DIR, 'data');
+const SPEC_FILE = join(DATA_DIR, 'spec.json');
 
-const NF = JSON.parse(readFileSync(join(BASE_DIR, 'nf.json')));
+const NF = JSON.parse(readFileSync(join(DATA_DIR, 'nf.json')));
 const SPEC = JSON.parse(readFileSync(SPEC_FILE));
 
 let decomp = NF.decomp.map(x => x.flat()).sort(compare_arrays);

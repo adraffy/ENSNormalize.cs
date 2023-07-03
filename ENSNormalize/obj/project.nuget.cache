@@ -1,11 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "S2qYc1xoia9toEmGb9f+HW24cm1dHWGGwDhdWaFuWHBr2MKJZP+pYmUlpN3TdMhb4y/ZzpiTdmxJUkRxCZme9g==",
+  "dgSpecHash": "lUEHwWq6OPPQjXNAUyVRFYjelj+FESqby9spKBrBtm/duP1Ru/QQ/Xvmi2xXlBm2nmoPYAwZMSnWmp+1As5Y+w==",
   "success": true,
   "projectFilePath": "N:\\code\\ENSNormalize.cs\\ENSNormalize\\ADRaffy.ENSNormalize.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\raffy\\.nuget\\packages\\microsoft.build.tasks.git\\1.1.1\\microsoft.build.tasks.git.1.1.1.nupkg.sha512",
     "C:\\Users\\raffy\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\raffy\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\microsoft.sourcelink.common\\1.1.1\\microsoft.sourcelink.common.1.1.1.nupkg.sha512",
+    "C:\\Users\\raffy\\.nuget\\packages\\microsoft.sourcelink.github\\1.1.1\\microsoft.sourcelink.github.1.1.1.nupkg.sha512",
     "C:\\Users\\raffy\\.nuget\\packages\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
     "C:\\Users\\raffy\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512",
     "C:\\Users\\raffy\\.nuget\\packages\\runtime.native.system\\4.3.0\\runtime.native.system.4.3.0.nupkg.sha512",

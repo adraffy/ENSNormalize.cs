@@ -95,7 +95,7 @@ namespace ADRaffy.ENSNormalize.Tests
                 List<int> cps = sb.ToString().Explode();
                 if (cps.Count != 1 || cps[0] != cp)
                 {
-                    throw new Exception($"Expect[{cp:x}] vs Got[{cps.ToHexSequence()}]");
+                    throw new Exception($"Expect[{cp.ToHex()}] vs Got[{cps.ToHexSequence()}]");
                 }
             }
         }
@@ -104,7 +104,7 @@ namespace ADRaffy.ENSNormalize.Tests
         public void NormalizeFragments()
         {
             ENSNormalize.ENSIP15.NormalizeFragment("AB--");
-            ENSNormalize.ENSIP15.NormalizeFragment("\u0300");
+            ENSNormalize.ENSIP15.NormalizeFragment("..\u0300");
             ENSNormalize.ENSIP15.NormalizeFragment("\u03BF\u043E");
         }
 

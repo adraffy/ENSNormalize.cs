@@ -5,9 +5,25 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
+    <VersionPrefix>0.1.1</VersionPrefix>
+    <PackageId>ADRaffy.ENSNormalize</PackageId>
     <Authors>raffy.eth</Authors>
+    <Description>Ethereum Name Service ENS-15 Name Normalization</Description>    
+    <RepositoryUrl>https://github.com/adraffy/ENSNormalize.cs</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageProjectUrl>https://adraffy.github.io/ens-normalize.js/test/resolver.html</PackageProjectUrl>
+    <PackageTags>ENS;ENSIP-15;Normalize;NFC;NFD</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Title>ENSNormalize</Title>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+    </ItemGroup>
+  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.1|AnyCPU'">
     <Optimize>False</Optimize>
   </PropertyGroup>

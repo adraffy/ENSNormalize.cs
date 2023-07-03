@@ -25,6 +25,7 @@ Console.WriteLine($"Groups: {ENSNormalize.ENSIP15.Groups.Count}");
 
 Console.WriteLine(ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh").ToHexSequence());
 Console.WriteLine(ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth").ToHexSequence());
+
 Console.WriteLine(ENSNormalize.ENSIP15.SafeCodepoint(0x303));
 Console.WriteLine(ENSNormalize.ENSIP15.SafeImplode(new int[] { 0x303, 0xFE0F }).ToHexSequence());
 Console.WriteLine(ENSNormalize.ENSIP15.ShouldEscape.Contains(0x202E));

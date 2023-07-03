@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     ".NETFramework,Version=v4.6.1": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETFramework,Version=v4.6.1",
         "compile": {
@@ -14,7 +14,7 @@
       }
     },
     ".NETFramework,Version=v4.6.1/win7-x86": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETFramework,Version=v4.6.1",
         "compile": {
@@ -26,7 +26,7 @@
       }
     },
     "net5.0": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -38,7 +38,7 @@
       }
     },
     "net5.0/win7-x86": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -50,7 +50,7 @@
       }
     },
     "net6.0": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -62,7 +62,7 @@
       }
     },
     "net6.0/win7-x86": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -74,7 +74,7 @@
       }
     },
     "net7.0": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -86,7 +86,7 @@
       }
     },
     "net7.0/win7-x86": {
-      "ADRaffy.ENSNormalize/1.0.0": {
+      "ADRaffy.ENSNormalize/0.1.1": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -99,7 +99,7 @@
     }
   },
   "libraries": {
-    "ADRaffy.ENSNormalize/1.0.0": {
+    "ADRaffy.ENSNormalize/0.1.1": {
       "type": "project",
       "path": "../ENSNormalize/ADRaffy.ENSNormalize.csproj",
       "msbuildProject": "../ENSNormalize/ADRaffy.ENSNormalize.csproj"
@@ -107,16 +107,16 @@
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.6.1": [
-      "ADRaffy.ENSNormalize >= 1.0.0"
+      "ADRaffy.ENSNormalize >= 0.1.1"
     ],
     "net5.0": [
-      "ADRaffy.ENSNormalize >= 1.0.0"
+      "ADRaffy.ENSNormalize >= 0.1.1"
     ],
     "net6.0": [
-      "ADRaffy.ENSNormalize >= 1.0.0"
+      "ADRaffy.ENSNormalize >= 0.1.1"
     ],
     "net7.0": [
-      "ADRaffy.ENSNormalize >= 1.0.0"
+      "ADRaffy.ENSNormalize >= 0.1.1"
     ]
   },
   "packageFolders": {

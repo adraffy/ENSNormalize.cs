@@ -1,4 +1,6 @@
 .vs/
+obj/
 Debug/
 Release/
+
 Research/

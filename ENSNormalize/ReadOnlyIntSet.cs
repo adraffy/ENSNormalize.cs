@@ -1,5 +1,4 @@
-﻿#define USE_SET
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 
 namespace ADRaffy.ENSNormalize
