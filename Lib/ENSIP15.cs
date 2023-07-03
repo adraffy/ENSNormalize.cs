@@ -44,7 +44,7 @@ namespace adraffy
         private readonly EmojiNode EmojiRoot = new();
         private readonly Dictionary<int, Whole> Confusables = new();
         private readonly Whole UNIQUE_PH = new(ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
-        private readonly Group GREEK;
+        private readonly Group GREEK, ASCII, EMOJI;
 
         static Dictionary<int, IReadOnlyList<int>> DecodeMapped(Decoder dec)
         {
@@ -86,9 +86,9 @@ namespace adraffy
                 string name = dec.ReadString();
                 if (name.Length == 0) break;
                 int bits = dec.ReadUnsigned();
-                bool restricted = (bits & 1) > 0;
+                GroupKind kind = (bits & 1) != 0 ? GroupKind.Restricted : GroupKind.Script;
                 bool cm = (bits & 2) > 0;
-                ret.Add(new(ret.Count, name, restricted, cm, new(dec.ReadUnique()), new(dec.ReadUnique())));
+                ret.Add(new(ret.Count, kind, name, cm, new(dec.ReadUnique()), new(dec.ReadUnique())));
             }
             return ret.ToArray();
         }
@@ -106,9 +106,6 @@ namespace adraffy
             Mapped = DecodeMapped(dec);
             Groups = DecodeGroups(dec);
             Emojis = dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToList();
-
-            // precompute: greek
-            GREEK = Groups.FirstOrDefault(g => g.Name == "Greek");
 
             // precompute: confusable extent complements
             List<Whole> wholes = new();
@@ -128,7 +125,7 @@ namespace adraffy
                 foreach (int cp in confused.Concat(valid))
                 {
                     Group[] gs = Groups.Where(g => g.Contains(cp)).ToArray();
-                    Extent extent = extents.Find(e => gs.Any(g => e.Groups.Contains(g)));
+                    Extent? extent = extents.FirstOrDefault(e => gs.Any(g => e.Groups.Contains(g)));
                     if (extent == null)
                     {
                         extent = new();
@@ -196,6 +193,11 @@ namespace adraffy
             }
             union.UnionWith(NF.NFD(union));
             PossiblyValid = new(union);
+
+            // precompute: special groups
+            GREEK = Groups.First(g => g.Name == "Greek");
+            ASCII = new(-1, GroupKind.ASCII, "ASCII", false, new(PossiblyValid.Where(cp => cp < 0x80)), ReadOnlyIntSet.EMPTY);
+            EMOJI = new(-1, GroupKind.Emoji, "Emoji", false, ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
 
             // precompute: unique non-confusables
             HashSet<int> unique = new(union);
@@ -332,13 +334,13 @@ namespace adraffy
             if (!emoji && norm.All(cp => cp < 0x80))
             {
                 CheckLabelExtension(norm);
-                group = Group.ASCII;
+                group = ASCII;
                 return norm;
             }
             int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
             if (emoji && !chars.Any())
             {
-                group = Group.EMOJI;
+                group = EMOJI;
                 return norm;
             }
             CheckCombiningMarks(tokens);
@@ -424,7 +426,7 @@ namespace adraffy
             List<int> shared = new();
             foreach (int cp in unique)
             {
-                if (!Confusables.TryGetValue(cp, out Whole w))
+                if (!Confusables.TryGetValue(cp, out var w))
                 {
                     shared.Add(cp);
                 } 
@@ -614,9 +616,9 @@ namespace adraffy
             Group? other = Groups.FirstOrDefault(x => x.Primary.Contains(cp));
             if (other != null)
             {
-                conflict = $"{other.Description} {conflict}";
+                conflict = $"{other} {conflict}";
             }
-            return new IllegalMixtureException($"{g.Description} + {conflict}", cp, g, other);
+            return new IllegalMixtureException($"{g} + {conflict}", cp, g, other);
         }
     }
 

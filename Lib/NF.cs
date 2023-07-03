@@ -41,7 +41,7 @@ namespace adraffy
         public readonly string UnicodeVersion;
 
         private readonly ReadOnlyIntSet Exclusions;
-        private readonly ReadOnlyIntSet QuickCheck;
+        private readonly ReadOnlyIntSet QuickCheck; // TODO: apply NFC Quick Check
         private readonly Dictionary<int, int> Rank = new();
         private readonly Dictionary<int, int[]> Decomp = new();
         private readonly Dictionary<int, Dictionary<int, int>> Recomp = new();
@@ -130,7 +130,6 @@ namespace adraffy
             }
             internal void FixOrder()
             {
-                // TODO: apply NFC Quick Check
                 if (!CheckOrder || Packed.Count == 1) return;
                 int prev = UnpackCC(Packed[0]);
                 for (int i = 1; i < Packed.Count; i++)

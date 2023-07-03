@@ -11,7 +11,7 @@ ENSNormalize.ENSIP15.Normalize("a");
 
 foreach (Group g in ENSNormalize.ENSIP15.Groups)
 {
-    Console.WriteLine($"{g.Index + 1}. {g.Description} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
+    Console.WriteLine($"{g.Index + 1}. {g} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
 }
 
 Console.WriteLine(ENSNormalize.NF.NFC("\x65\u0300").ToHexSequence());
