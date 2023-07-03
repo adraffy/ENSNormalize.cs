@@ -45,7 +45,7 @@ void DumpSplit(string name)
 {
     Label[] labels = ENSNormalize.ENSIP15.Split(name);
     Console.Write('[');
-    if (labels.Any()) Console.WriteLine();
+    if (labels.Length > 0) Console.WriteLine();
     foreach (Label x in labels) 
     {
         Console.Write("  ");
@@ -125,6 +125,7 @@ int TestENSIP15(ENSIP15 impl)
 int TestNF(NF impl)
 {
     Stopwatch watch = new();
+    watch.Start();
     Console.WriteLine("[TestNF]");
     int errors = 0;
     Console.WriteLine($"Unicode Version: {impl.UnicodeVersion}");

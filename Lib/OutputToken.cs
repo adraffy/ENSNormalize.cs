@@ -7,7 +7,7 @@ namespace adraffy
         public readonly IReadOnlyList<int> Codepoints;
         public readonly EmojiSequence? Emoji;
         public bool IsEmoji { get => Emoji != null; }
-        public OutputToken(IReadOnlyList<int> cps, EmojiSequence? emoji)
+        public OutputToken(IReadOnlyList<int> cps, EmojiSequence? emoji = null)
         {
             Emoji = emoji;
             Codepoints = cps;

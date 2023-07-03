@@ -71,14 +71,8 @@ namespace adraffy
             }
             return a + ReadBinary(w);
         }
-        public int[] ReadSortedAscending(int n)
-        {
-            return ReadArray(n, (prev, x) => prev + 1 + x);
-        }
-        public int[] ReadUnsortedDeltas(int n)
-        {
-            return ReadArray(n, (prev, x) => prev + AsSigned(x));
-        }
+        public int[] ReadSortedAscending(int n) => ReadArray(n, (prev, x) => prev + 1 + x);
+        public int[] ReadUnsortedDeltas(int n) => ReadArray(n, (prev, x) => prev + AsSigned(x));
         public int[] ReadArray(int count, Func<int,int,int> fn)
         {
             int[] v = new int[count];
@@ -130,10 +124,7 @@ namespace adraffy
             path.RemoveAt(i);
         }
         // convenience
-        public string ReadString()
-        {
-            return ReadUnsortedDeltas(ReadUnsigned()).Implode();
-        }
+        public string ReadString() => ReadUnsortedDeltas(ReadUnsigned()).Implode();
         public int[] ReadSortedUnique()
         {
             int[] v = ReadUnique().ToArray();

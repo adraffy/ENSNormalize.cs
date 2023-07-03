@@ -14,20 +14,13 @@ namespace adraffy
         const int UTF16_LO = 0xDC00; // 110111*
 
         // format strings/codepoints as "HEX1 HEX2 ..."
-        static public string ToHexSequence(this IEnumerable<int> v)
-        {
-            return string.Join(" ", v.Select(x => x.ToString("X").PadLeft(2, '0')));
-        }
-        static public string ToHexSequence(this string s)
-        {
-            return s.Explode().ToHexSequence();
-        }
+        static public string ToHexSequence(this IEnumerable<int> v) => string.Join(" ", v.Select(x => x.ToString("X").PadLeft(2, '0')));
+        static public string ToHexSequence(this string s) => s.Explode().ToHexSequence();
         
         // convert strings <=> codepoints
-        static public IEnumerable<int> Explode(this string s)
+        static public List<int> Explode(this string s)
         {         
             int n = s.Length;
-            if (n == 0) return new int[] { 0 };
             List<int> v = new(n);
             for (int i = 0; i < n; )
             {
@@ -54,17 +47,13 @@ namespace adraffy
         }
         static public string Implode(this IEnumerable<int> cps)
         {
-            int[] v = cps.ToArray();
-            StringBuilder sb = new(v.UTF16Length());
-            sb.AppendCodepoints(v);
+            StringBuilder sb = new(cps.UTF16Length());
+            sb.AppendCodepoints(cps);
             return sb.ToString();
         }
 
         // efficiently build strings from codepoints
-        static public int UTF16Length(this IReadOnlyList<int> cps)
-        {
-            return cps.Sum(x => x < UTF16_BMP ? 1 : 2);
-        }
+        static public int UTF16Length(this IEnumerable<int> cps) => cps.Sum(x => x < UTF16_BMP ? 1 : 2);
         static public void AppendCodepoint(this StringBuilder sb, int cp)
         {
             if (cp < UTF16_BMP)

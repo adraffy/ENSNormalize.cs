@@ -9,7 +9,7 @@
         public readonly ReadOnlyIntSet Primary;
         public readonly ReadOnlyIntSet Secondary;
         public bool IsRestricted { get => Kind == GroupKind.Restricted; }
-        internal Group(int index, GroupKind kind, string name,  bool cm, ReadOnlyIntSet primary, ReadOnlyIntSet secondary)
+        internal Group(int index, GroupKind kind, string name, bool cm, ReadOnlyIntSet primary, ReadOnlyIntSet secondary)
         {
             Index = index;
             Kind = kind;
@@ -18,10 +18,7 @@
             Primary = primary;
             Secondary = secondary;
         }
-        public bool Contains(int cp)
-        {
-            return Primary.Contains(cp) || Secondary.Contains(cp);
-        }
+        public bool Contains(int cp) => Primary.Contains(cp) || Secondary.Contains(cp);
         public override string ToString()
         {
             return IsRestricted ? $"Restricted[{Name}]" : Name;

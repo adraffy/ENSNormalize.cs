@@ -6,11 +6,7 @@ namespace adraffy
     {
         public readonly string Kind;
         public readonly string? Reason;
-        internal NormException(string kind) : base(kind)
-        {
-            Kind = kind;
-        }
-        internal NormException(string kind, string reason) : base($"{kind}: {reason}")
+        internal NormException(string kind, string? reason = null) : base(reason != null ? $"{kind}: {reason}" : kind)
         {
             Kind = kind;
             Reason = reason;

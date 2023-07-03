@@ -87,7 +87,7 @@ namespace adraffy
                 if (name.Length == 0) break;
                 int bits = dec.ReadUnsigned();
                 GroupKind kind = (bits & 1) != 0 ? GroupKind.Restricted : GroupKind.Script;
-                bool cm = (bits & 2) > 0;
+                bool cm = (bits & 2) != 0;
                 ret.Add(new(ret.Count, kind, name, cm, new(dec.ReadUnique()), new(dec.ReadUnique())));
             }
             return ret.ToArray();
@@ -112,7 +112,7 @@ namespace adraffy
             while (true)
             {
                 ReadOnlyIntSet confused = new(dec.ReadUnique());
-                if (!confused.Any()) break;
+                if (confused.Count == 0) break;
                 ReadOnlyIntSet valid = new(dec.ReadUnique());
                 Whole w = new(valid, confused);
                 wholes.Add(w);
@@ -223,21 +223,14 @@ namespace adraffy
         // format as "X {HEX}" if possible
         public string SafeCodepoint(int cp)
         {
-            if (ShouldEscape.Contains(cp))
-            {
-                return HexEscape(cp);
-            }
-            else
-            {
-                return $"{ResetBidi(SafeImplode(new int[] { cp }))} {HexEscape(cp)}";
-            }
+            return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"{ResetBidi(SafeImplode(new int[] { cp }))} {HexEscape(cp)}";
         }
-
-        // assume: cps.length > 0
         public string SafeImplode(IReadOnlyList<int> cps)
         {
-            StringBuilder sb = new(cps.Count + 16); // guess
-            if (cps.Any() && CombiningMarks.Contains(cps[0]))
+            int n = cps.Count;
+            if (n == 0) return "";
+            StringBuilder sb = new(n + 16); // guess
+            if (CombiningMarks.Contains(cps[0]))
             {
                 sb.AppendCodepoint(0x25CC);
             }
@@ -282,12 +275,12 @@ namespace adraffy
             return Transform(name, cps => OutputTokenize(cps, decompose ? NF.NFD : NF.NFC, e => e.Normalized).SelectMany(t => t.Codepoints));
         }
 
-        string Transform(string name, Func<int[], IEnumerable<int>> fn)
+        string Transform(string name, Func<List<int>, IEnumerable<int>> fn)
         {
-            StringBuilder sb = new(name.Length + 16);
+            StringBuilder sb = new(name.Length + 16); // guess
             foreach (string label in name.Split(STOP_CH))
             {
-                int[] cps = label.Explode().ToArray();
+                List<int> cps = label.Explode();
                 try
                 {
                     if (sb.Length > 0) sb.Append(STOP_CH);
@@ -308,7 +301,7 @@ namespace adraffy
         }
         public Label NormalizeLabel(string label)
         {
-            int[] input = label.Explode().ToArray();
+            List<int> input = label.Explode();
             List<OutputToken>? tokens = null;
             try
             {
@@ -324,7 +317,7 @@ namespace adraffy
 
         int[] NormalizedLabelFromTokens(IReadOnlyList<OutputToken> tokens, out Group group)
         {
-            if (!tokens.Any())
+            if (tokens.Count == 0)  
             {
                 throw new NormException("empty label");
             }
@@ -338,7 +331,7 @@ namespace adraffy
                 return norm;
             }
             int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
-            if (emoji && !chars.Any())
+            if (emoji && chars.Length == 0)
             {
                 group = EMOJI;
                 return norm;
@@ -358,7 +351,7 @@ namespace adraffy
             IReadOnlyList<Group> prev = Groups;
             foreach (int cp in unique) {
                 Group[] next = prev.Where(g => g.Contains(cp)).ToArray();
-                if (!next.Any())
+                if (next.Length == 0)
                 {   
                     if (prev == Groups)
                     {
@@ -436,23 +429,20 @@ namespace adraffy
                 }
                 else 
                 {
-                    int[] comp = w.Complement[cp];
+                    int[] comp = w.Complement[cp]; // exists by construction
                     if (bound == 0)
                     {
-                        maker = comp.ToArray();
-                        bound = comp.Length;
+                        maker = comp.ToArray(); // non-empty
+                        bound = comp.Length; 
                     }
-                    else
+                    else // intersect(comp, maker)
                     {
                         int b = 0;
                         for (int i = 0; i < bound; i++)
                         {
                             if (comp.Contains(maker![i]))
                             {
-                                if (i > b)
-                                {
-                                    maker[b] = maker[i];
-                                }
+                                if (i > b) maker[b] = maker[i];
                                 ++b;
                             }
                         }
@@ -483,7 +473,7 @@ namespace adraffy
         {
             EmojiNode? node = EmojiRoot;
             EmojiSequence? last = null;
-            for (int i = index; i < cps.Count; )
+            for (int i = index, e = cps.Count; i < e; )
             {
                 if (node.Dict == null || !node.Dict.TryGetValue(cps[i++], out node)) break;
                 if (node.Emoji != null) // the emoji is valid
@@ -498,18 +488,19 @@ namespace adraffy
         List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, IReadOnlyList<int>> emojiStyler)
         {
             List<OutputToken> tokens = new();
-            List<int> buf = new(cps.Count);
-            for (int i = 0, e = cps.Count; i < e; )
+            int n = cps.Count;
+            List<int> buf = new(n);
+            for (int i = 0; i < n; )
             {
                 EmojiSequence? emoji = FindEmoji(cps, ref i);
                 if (emoji != null) // found an emoji
                 {
-                    if (buf.Any()) // consume buffered
+                    if (buf.Count > 0) // consume buffered
                     {
-                        tokens.Add(new OutputToken(nf(buf).ToArray(), null));
+                        tokens.Add(new(nf(buf)));
                         buf.Clear();
                     }
-                    tokens.Add(new OutputToken(emojiStyler(emoji), emoji)); // add emoji
+                    tokens.Add(new(emojiStyler(emoji), emoji)); // add emoji
                 }
                 else
                 {
@@ -528,9 +519,9 @@ namespace adraffy
                     }
                 }
             }
-            if (buf.Any()) // flush buffered
+            if (buf.Count > 0) // flush buffered
             {
-                tokens.Add(new OutputToken(nf(buf).ToArray(), null));
+                tokens.Add(new(nf(buf)));
             }
             return tokens;
         }
@@ -541,10 +532,10 @@ namespace adraffy
             {
                 throw new NormException("leading fenced", name);
             }
-            int count = cps.Count;
+            int n = cps.Count;
             int last = -1;
             string prev = "";
-            for (int i = 1; i < count; i++)
+            for (int i = 1; i < n; i++)
             {
                 if (Fenced.TryGetValue(cps[i], out name))
                 {
@@ -556,7 +547,7 @@ namespace adraffy
                     prev = name;
                 }
             }
-            if (last == count)
+            if (last == n)
             {
                 throw new NormException($"trailing fenced", prev);
             }
@@ -572,8 +563,9 @@ namespace adraffy
                     {
                         throw new NormException("leading combining mark", SafeCodepoint(t.Codepoints[0]));
                     }
-                    else
+                    else 
                     {
+                        // note: the previous token must an EmojiSequence
                         throw new NormException("emoji + combining mark", $"{tokens[i - 1].Codepoints.Implode()} + {SafeCodepoint(t.Codepoints[0])}");
                     }
                 }

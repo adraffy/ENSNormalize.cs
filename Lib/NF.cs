@@ -80,7 +80,7 @@ namespace adraffy
             {
                 rank += 1 << SHIFT;
                 List<int> v = dec.ReadUnique();
-                if (!v.Any()) break;
+                if (v.Count == 0) break;
                 foreach (int cp in v)
                 {
                     Rank.Add(cp, rank);

@@ -13,5 +13,6 @@ namespace adraffy
             Valid = valid;
             Confused = confused;
         }
+        public bool Contains(int cp) => Valid.Contains(cp) || Confused.Contains(cp);
     }
 }

@@ -13,12 +13,12 @@ namespace adraffy
         public readonly IReadOnlyList<int>? Normalized;
         public readonly Group? Group;
 
-        internal Label(int[] input, List<OutputToken>? tokens, NormException e) {
+        internal Label(IReadOnlyList<int> input, List<OutputToken>? tokens, NormException e) {
             Input = input;
             Tokens = tokens;
             Error = e;
         }
-        internal Label(int[] input, List<OutputToken> tokens, int[] cps, Group g) 
+        internal Label(IReadOnlyList<int> input, List<OutputToken> tokens, int[] cps, Group g) 
         {
             Input = input;
             Tokens = tokens;

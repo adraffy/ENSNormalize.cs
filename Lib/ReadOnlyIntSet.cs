@@ -14,11 +14,11 @@ namespace adraffy
         {
             Set = new(v);
         }
-        IEnumerator<int> IEnumerable<int>.GetEnumerator() => Set.GetEnumerator();
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() => Set.GetEnumerator(); // ew
         IEnumerator IEnumerable.GetEnumerator() => Set.GetEnumerator();
         public bool Contains(int x) => Set.Contains(x);
 
-        // note: uses less memory but slightly slower
+        // note: uses less memory but 10% slower
         /*
         private readonly int[] Sorted;
         public int this[int index] { get => Sorted[index]; }
