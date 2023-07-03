@@ -37,6 +37,10 @@ Console.WriteLine(ENSNormalize.ENSIP15.SafeCodepoint(0x303));
 Console.WriteLine(ENSNormalize.ENSIP15.SafeImplode(new int[] { 0x303, 0xFE0F }).ToHexSequence());
 Console.WriteLine(ENSNormalize.ENSIP15.ShouldEscape.Contains(0x202E));
 
+Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("AB--").ToHexSequence());
+Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("\u0300").ToHexSequence());
+Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("\u03BF\u043E").ToHexSequence());
+
 void DumpSplit(string name)
 {
     Label[] labels = ENSNormalize.ENSIP15.Split(name);

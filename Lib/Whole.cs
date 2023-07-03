@@ -4,15 +4,14 @@ namespace adraffy
 {
     public class Whole
     {
-        public readonly IReadOnlyCollection<int> Valid;
-        public readonly IReadOnlyCollection<int> Confused;
+        public readonly ReadOnlyIntSet Valid;
+        public readonly ReadOnlyIntSet Confused;
 
         internal readonly Dictionary<int, int[]> Complement = new();
-        internal Whole() { }
-        internal Whole(List<int> valid, List<int> confused)
+        internal Whole(ReadOnlyIntSet valid, ReadOnlyIntSet confused)
         {
-            Valid = (IReadOnlyCollection<int>)new HashSet<int>(valid);
-            Confused = (IReadOnlyCollection<int>)new HashSet<int>(confused);
+            Valid = valid;
+            Confused = confused;
         }
     }
 }

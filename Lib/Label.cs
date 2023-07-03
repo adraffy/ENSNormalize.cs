@@ -5,15 +5,15 @@ namespace adraffy
     public class Label
     {
         // error: [Input, Tokens?, Error ]
-        // valid: [Input, Tokens, Group?, Normalized ]
+        // valid: [Input, Tokens, Group, Normalized ]
 
         public readonly IReadOnlyList<int> Input;
-        public readonly IReadOnlyList<OutputToken> Tokens; // nullable
-        public readonly NormException Error; // nullable
-        public readonly IReadOnlyList<int> Normalized; // nullable
-        public readonly Group Group; // nullable
+        public readonly IReadOnlyList<OutputToken>? Tokens;
+        public readonly NormException? Error;
+        public readonly IReadOnlyList<int>? Normalized;
+        public readonly Group? Group;
 
-        internal Label(int[] input, List<OutputToken> tokens, NormException e) {
+        internal Label(int[] input, List<OutputToken>? tokens, NormException e) {
             Input = input;
             Tokens = tokens;
             Error = e;

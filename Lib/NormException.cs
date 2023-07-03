@@ -5,7 +5,7 @@ namespace adraffy
     public class NormException : Exception
     {
         public readonly string Kind;
-        public readonly string Reason; // nullable
+        public readonly string? Reason;
         internal NormException(string kind) : base(kind)
         {
             Kind = kind;

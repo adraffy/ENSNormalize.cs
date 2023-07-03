@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace adraffy
+﻿namespace adraffy
 {
     public class Group
     {
@@ -21,24 +18,26 @@ namespace adraffy
         public readonly string Description;
         public readonly GroupKind Kind;
         public readonly bool CMWhitelisted;
-        public readonly IReadOnlyCollection<int> Primary;
-        public readonly IReadOnlyCollection<int> Secondary;
+        public readonly ReadOnlyIntSet Primary;
+        public readonly ReadOnlyIntSet Secondary;
         public bool IsRestricted { get => Kind == GroupKind.Restricted; }
         internal Group(GroupKind kind, string name)
         {
             Index = -1;
             Name = Description = name;
             Kind = kind;
+            Primary = ReadOnlyIntSet.EMPTY;
+            Secondary = ReadOnlyIntSet.EMPTY;
         }
-        internal Group(int index, string name, bool restricted, bool cm, IEnumerable<int> primary, IEnumerable<int> secondary)
+        internal Group(int index, string name, bool restricted, bool cm, ReadOnlyIntSet primary, ReadOnlyIntSet secondary)
         {
             Index = index;
             Name = name;
             Description = restricted ? $"Restricted[{Name}]" : Name;
             Kind = restricted ? GroupKind.Script : GroupKind.Restricted;
             CMWhitelisted = cm;
-            Primary = (IReadOnlyCollection<int>)new HashSet<int>(primary); 
-            Secondary = (IReadOnlyCollection<int>)new HashSet<int>(secondary);
+            Primary = primary;
+            Secondary = secondary;
         }
         public bool Contains(int cp)
         {

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace adraffy
@@ -40,8 +40,8 @@ namespace adraffy
 
         public readonly string UnicodeVersion;
 
-        private readonly HashSet<int> Exclusions;
-        private readonly HashSet<int> QuickCheck;
+        private readonly ReadOnlyIntSet Exclusions;
+        private readonly ReadOnlyIntSet QuickCheck;
         private readonly Dictionary<int, int> Rank = new();
         private readonly Dictionary<int, int[]> Decomp = new();
         private readonly Dictionary<int, Dictionary<int, int>> Recomp = new();
@@ -49,7 +49,6 @@ namespace adraffy
         public NF(Decoder dec)
         {
             UnicodeVersion = dec.ReadString();
-            Debug.WriteLine(UnicodeVersion);
             Exclusions = new(dec.ReadUnique());
             QuickCheck = new(dec.ReadUnique());
             int[] decomp1 = dec.ReadSortedUnique();

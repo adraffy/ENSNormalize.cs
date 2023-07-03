@@ -55,7 +55,8 @@ export class Magic {
 		let magic = new Magic(collect_while(() => r.binary(MAGIC_BITS)));
 		return () => magic.read(r);
 	}
-	static optimize(symbols, max = 20, len = 6) {
+	// note: this is really inefficient
+	static optimize(symbols, max, len = Infinity) {
 		let min = Infinity;
 		let ret;
 		loop(len, 1, []);
@@ -73,7 +74,7 @@ export class Magic {
 				let buf = magic.bytes_from_symbols(symbols);
 				if (buf.length < min) {
 					min = buf.length;
-					console.log(v, min);
+					console.log(v.join(','), min);
 					ret = [magic, buf];
 				}
 			} catch (err) {

@@ -43,8 +43,8 @@ namespace adraffy
                 {
                     v.Add(ch0);
                 }
-                /*
                 // reference implementation
+                /*
                 int cp = char.ConvertToUtf32(s, i);
                 v.Add(cp);
                 i += char.IsSurrogatePair(s, i) ? 2 : 1;

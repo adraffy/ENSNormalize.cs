@@ -140,10 +140,6 @@ namespace adraffy
             Array.Sort(v);
             return v;
         }
-        public HashSet<int> ReadSet()
-        {
-            return new(ReadUnique());
-        }
     }
 
 }

@@ -6,12 +6,9 @@ namespace adraffy
     public class EmojiSequence
     {
         public readonly string Form;
+        public readonly IReadOnlyList<int> Beautified;
+        public readonly IReadOnlyList<int> Normalized;
         public bool IsMangled { get => Beautified != Normalized; }
-        public IReadOnlyList<int> Codepoints { get => Beautified; }
-        public int NormalizedLength { get => Normalized.Length; }    
-
-        internal readonly int[] Beautified;
-        internal readonly int[] Normalized;
         internal EmojiSequence(int[] cps)
         {
             Beautified = cps;

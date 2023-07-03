@@ -78,14 +78,14 @@ for (let x of SPEC.wholes) {
 }
 w2.unique([]);
 
-let magic1 = new Magic([ 2, 6, 8, 12, 15, 19 ]);
-let magic2 = new Magic([ 1, 3, 7, 13, 16, 20 ]);
+let magic1 = new Magic([2,6,8,11,14,15,18]);
+let magic2 = new Magic([1,3,7,13,16,17,18,19]);
 let bytes1 = magic1.bytes_from_symbols(w1.symbols);
 let bytes2 = magic2.bytes_from_symbols(w2.symbols);
 
-if (0) {
-	[magic1, bytes1] = Magic.optimize(w1.symbols);
-	[magic2, bytes2] = Magic.optimize(w2.symbols);
+if (0) { // enable to recompute (very slow)
+	[magic1, bytes1] = Magic.optimize(w1.symbols, 20); 
+	[magic2, bytes2] = Magic.optimize(w2.symbols, 20);
 }
 
 console.log(`NF ${bytes1.length} using ${magic1.widths}`);
@@ -97,7 +97,7 @@ console.log(`Spec: ${bytes2.length} using ${magic2.widths}`);
 // TODO: fix me
 function u32s(buf) {
 	if (buf.length & 3) {
-		buf = Buffer.concat([buf, new Uint8Array(4 - (buf.length & 3))]);
+		buf = Buffer.concat([buf, Buffer.alloc(4 - (buf.length & 3))]);
 	}
 	let v = [];
 	for (let i = 0; i < buf.length; i += 4) {

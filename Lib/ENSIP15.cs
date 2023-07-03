@@ -7,8 +7,8 @@ namespace adraffy
 {
     internal class EmojiNode
     {
-        internal EmojiSequence Emoji;
-        internal Dictionary<int, EmojiNode> Dict;
+        internal EmojiSequence? Emoji;
+        internal Dictionary<int, EmojiNode>? Dict;
         internal EmojiNode Then(int cp)
         {
             Dict ??= new();
@@ -29,22 +29,21 @@ namespace adraffy
 
         public readonly NF NF;
         public readonly int MaxNonSpacingMarks;
-        public readonly IReadOnlyList<EmojiSequence> Emojis;
-
-        public readonly IReadOnlyCollection<int> Ignored;
-        public readonly IReadOnlyCollection<int> CombiningMarks;
-        public readonly IReadOnlyCollection<int> NonSpacingMarks;
-        public readonly IReadOnlyCollection<int> ShouldEscape;
-        public readonly IReadOnlyCollection<int> NFCCheck;
-        public readonly IReadOnlyCollection<int> PossiblyValid;
+        public readonly ReadOnlyIntSet Ignored;
+        public readonly ReadOnlyIntSet CombiningMarks;
+        public readonly ReadOnlyIntSet NonSpacingMarks;
+        public readonly ReadOnlyIntSet ShouldEscape;
+        public readonly ReadOnlyIntSet NFCCheck;
+        public readonly ReadOnlyIntSet PossiblyValid;
         public readonly IReadOnlyDictionary<int, IReadOnlyList<int>> Mapped;
         public readonly IReadOnlyDictionary<int, string> Fenced;
         public readonly IReadOnlyList<Group> Groups;
         public readonly IReadOnlyList<Whole> Wholes;
+        public readonly IReadOnlyList<EmojiSequence> Emojis;
 
         private readonly EmojiNode EmojiRoot = new();
         private readonly Dictionary<int, Whole> Confusables = new();
-        private readonly Whole UNIQUE_PH = new();
+        private readonly Whole UNIQUE_PH = new(ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
         private readonly Group GREEK;
 
         static Dictionary<int, IReadOnlyList<int>> DecodeMapped(Decoder dec)
@@ -89,7 +88,7 @@ namespace adraffy
                 int bits = dec.ReadUnsigned();
                 bool restricted = (bits & 1) > 0;
                 bool cm = (bits & 2) > 0;
-                ret.Add(new(ret.Count, name, restricted, cm, dec.ReadUnique(), dec.ReadUnique()));
+                ret.Add(new(ret.Count, name, restricted, cm, new(dec.ReadUnique()), new(dec.ReadUnique())));
             }
             return ret.ToArray();
         }
@@ -97,12 +96,12 @@ namespace adraffy
         public ENSIP15(NF nf, Decoder dec)
         {
             NF = nf;
-            ShouldEscape = (IReadOnlyCollection<int>)dec.ReadSet();
-            Ignored = (IReadOnlyCollection<int>)dec.ReadSet();
-            CombiningMarks = (IReadOnlyCollection<int>)dec.ReadSet();
+            ShouldEscape = new(dec.ReadUnique());
+            Ignored = new(dec.ReadUnique());
+            CombiningMarks = new(dec.ReadUnique());
             MaxNonSpacingMarks = dec.ReadUnsigned();
-            NonSpacingMarks = (IReadOnlyCollection<int>)dec.ReadSet();
-            NFCCheck = (IReadOnlyCollection<int>)dec.ReadSet();
+            NonSpacingMarks = new(dec.ReadUnique());
+            NFCCheck = new(dec.ReadUnique());
             Fenced = DecodeNamedCodepoints(dec);
             Mapped = DecodeMapped(dec);
             Groups = DecodeGroups(dec);
@@ -115,9 +114,9 @@ namespace adraffy
             List<Whole> wholes = new();
             while (true)
             {
-                List<int> confused = dec.ReadUnique();
+                ReadOnlyIntSet confused = new(dec.ReadUnique());
                 if (!confused.Any()) break;
-                List<int> valid = dec.ReadUnique();
+                ReadOnlyIntSet valid = new(dec.ReadUnique());
                 Whole w = new(valid, confused);
                 wholes.Add(w);
                 foreach (int cp in confused)
@@ -196,7 +195,7 @@ namespace adraffy
                 }
             }
             union.UnionWith(NF.NFD(union));
-            PossiblyValid = (IReadOnlyCollection<int>)union;
+            PossiblyValid = new(union);
 
             // precompute: unique non-confusables
             HashSet<int> unique = new(union);
@@ -300,7 +299,6 @@ namespace adraffy
             return sb.ToString();
         }
 
-
         // never throws
         public Label[] Split(string name)
         {
@@ -309,7 +307,7 @@ namespace adraffy
         public Label NormalizeLabel(string label)
         {
             int[] input = label.Explode().ToArray();
-            List<OutputToken> tokens = null;
+            List<OutputToken>? tokens = null;
             try
             {
                 tokens = OutputTokenize(input, NF.NFC, e => e.Normalized.ToArray()); // force a copy since we are exposing
@@ -422,7 +420,7 @@ namespace adraffy
         void CheckWhole(Group g, IReadOnlyList<int> unique)
         {
             int bound = 0;
-            int[] maker = null;
+            int[]? maker = null;
             List<int> shared = new();
             foreach (int cp in unique)
             {
@@ -447,7 +445,7 @@ namespace adraffy
                         int b = 0;
                         for (int i = 0; i < bound; i++)
                         {
-                            if (comp.Contains(maker[i]))
+                            if (comp.Contains(maker![i]))
                             {
                                 if (i > b)
                                 {
@@ -468,7 +466,7 @@ namespace adraffy
             {
                 for (int i = 0; i < bound; i++)
                 {
-                    Group group = Groups[maker[i]];
+                    Group group = Groups[maker![i]];
                     if (shared.All(group.Contains))
                     {
                         throw new ConfusableException(g, group);
@@ -479,10 +477,10 @@ namespace adraffy
 
         // find the longest emoji that matches at index
         // if found, returns and updates the index
-        EmojiSequence FindEmoji(IReadOnlyList<int> cps, ref int index)
+        EmojiSequence? FindEmoji(IReadOnlyList<int> cps, ref int index)
         {
-            EmojiNode node = EmojiRoot;
-            EmojiSequence last = null;
+            EmojiNode? node = EmojiRoot;
+            EmojiSequence? last = null;
             for (int i = index; i < cps.Count; )
             {
                 if (node.Dict == null || !node.Dict.TryGetValue(cps[i++], out node)) break;
@@ -495,13 +493,13 @@ namespace adraffy
             return last; // last emoji found
         }
 
-        List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, int[]> emojiStyler)
+        List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, IReadOnlyList<int>> emojiStyler)
         {
             List<OutputToken> tokens = new();
             List<int> buf = new(cps.Count);
             for (int i = 0, e = cps.Count; i < e; )
             {
-                EmojiSequence emoji = FindEmoji(cps, ref i);
+                EmojiSequence? emoji = FindEmoji(cps, ref i);
                 if (emoji != null) // found an emoji
                 {
                     if (buf.Any()) // consume buffered
@@ -613,7 +611,7 @@ namespace adraffy
         private IllegalMixtureException CreateMixtureException(Group g, int cp)
         {
             string conflict = SafeCodepoint(cp);
-            Group other = Groups.FirstOrDefault(x => x.Primary.Contains(cp));
+            Group? other = Groups.FirstOrDefault(x => x.Primary.Contains(cp));
             if (other != null)
             {
                 conflict = $"{other.Description} {conflict}";
