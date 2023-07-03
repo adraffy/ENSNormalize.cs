@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ENS", "Lib\ENS.csproj", "{E05966F1-D762-4C46-B2B8-FF90AFDD5D98}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ADRaffy.ENSNormalize", "ENSNormalize\ADRaffy.ENSNormalize.csproj", "{E05966F1-D762-4C46-B2B8-FF90AFDD5D98}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{D5BBD203-B8BD-4FB5-9A62-D0D9D3AFBA74}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "Console\Console.csproj", "{D5BBD203-B8BD-4FB5-9A62-D0D9D3AFBA74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnsNormalize.Tests", "EnsNormalize.Tests\EnsNormalize.Tests.csproj", "{69F375BF-DF3E-43B2-BAC5-5D685613EC18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ADRaffy.ENSNormalize.Tests", "Tests\ADRaffy.ENSNormalize.Tests.csproj", "{69F375BF-DF3E-43B2-BAC5-5D685613EC18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
