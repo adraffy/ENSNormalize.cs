@@ -27,24 +27,37 @@ namespace ADRaffy.ENSNormalize
             if (Bits == 0)
             {
                 Word = Words[Index++];
-                Bits = 32;
+                Bits = 1;
             }
-            bool bit = (Word & 1) != 0;
-            Word >>= 1;
-            Bits--;
+            bool bit = (Word & Bits) != 0;
+            Bits <<= 1;
             return bit;
         }
+        // read an ascending array 
         private int[] ReadMagic()
         {
             List<int> magic = new();
+            int w = 0;
             while (true)
             {
-                int w = ReadBinary(5);
-                if (w == 0) break;
-                magic.Add(w);
+                int dw = ReadUnary();
+                if (dw == 0) break;
+                magic.Add(w += dw);
             }
             return magic.ToArray();
         }
+        // 1*0 = number of 1s
+        // eg. 4 = 11110
+        //     1 = 10
+        //     0 = 0
+        public int ReadUnary()
+        {
+            int x = 0;
+            while (ReadBit()) x++;
+            return x;
+        }
+        // read w-bits => interpret as w-bit int 
+        // MSB first
         public int ReadBinary(int w)
         {
             int x = 0;
@@ -57,6 +70,7 @@ namespace ADRaffy.ENSNormalize
             }  
             return x;
         }
+        // read magic-encoded int
         public int ReadUnsigned()
         {
             int a = 0;

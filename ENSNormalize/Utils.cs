@@ -8,7 +8,7 @@ namespace ADRaffy.ENSNormalize
     {
         const int UTF16_BMP = 0x10000;
         const int UTF16_BITS = 10;
-        const int UTF16_HEAD = ~0 << UTF16_BITS;    // upper 6 bits
+        const int UTF16_HEAD = ~0 << UTF16_BITS;      // upper 6 bits
         const int UTF16_DATA = (1 << UTF16_BITS) - 1; // lower 10 bits
         const int UTF16_HI = 0xD800; // 110110*
         const int UTF16_LO = 0xDC00; // 110111*
@@ -19,6 +19,7 @@ namespace ADRaffy.ENSNormalize
         static public string ToHexSequence(this string s) => s.Explode().ToHexSequence();
         
         // convert strings <=> codepoints
+        // note: we do not care if the string is invalid UTF-16
         static public List<int> Explode(this string s)
         {         
             int n = s.Length;
@@ -39,7 +40,7 @@ namespace ADRaffy.ENSNormalize
                 }
                 // reference implementation
                 /*
-                int cp = char.ConvertToUtf32(s, i);
+                int cp = char.ConvertToUtf32(s, i); // errors on invalid
                 v.Add(cp);
                 i += char.IsSurrogatePair(s, i) ? 2 : 1;
                 */
@@ -68,7 +69,7 @@ namespace ADRaffy.ENSNormalize
                 sb.Append((char)(UTF16_LO | (cp & UTF16_DATA)));
             }
             // reference implementation
-            //sb.Append(char.ConvertFromUtf32(cp));
+            //sb.Append(char.ConvertFromUtf32(cp)); // allocates a string
         }
         static public void AppendCodepoints(this StringBuilder sb, IEnumerable<int> v)
         {

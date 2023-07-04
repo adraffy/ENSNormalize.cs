@@ -12,6 +12,7 @@ import { createHash } from 'node:crypto';
 const BASE_DIR = fileURLToPath(new URL('.', import.meta.url));
 const DATA_DIR = join(BASE_DIR, 'data');
 const SPEC_FILE = join(DATA_DIR, 'spec.json');
+const CODE_DIR = join(BASE_DIR, '../ENSNormalize/');
 
 const NF = JSON.parse(readFileSync(join(DATA_DIR, 'nf.json')));
 const SPEC = JSON.parse(readFileSync(SPEC_FILE));
@@ -89,11 +90,11 @@ if (0) { // enable to recompute (very slow)
 	[magic2, bytes2] = Magic.optimize(w2.symbols, 20);
 }
 
-console.log(`NF ${bytes1.length} using ${magic1.widths}`);
+console.log(`  NF: ${bytes1.length} using ${magic1.widths}`);
 console.log(`Spec: ${bytes2.length} using ${magic2.widths}`);
 
-//writeFileSync(join(BASE_DIR, '../Lib/Resources/nf.bin'), bytes1);
-//writeFileSync(join(BASE_DIR, '../Lib/Resources/spec.bin'), bytes2);
+//writeFileSync(join(OUT_DIR, 'Resources/nf.bin'), bytes1);
+//writeFileSync(join(OUT_DIR, 'Resources/spec.bin'), bytes2);
 
 // TODO: fix me
 function u32s(buf) {
@@ -109,9 +110,9 @@ function u32s(buf) {
 function items(v, inset) {
 	return partition(u32s(v), 10).map(v => inset + v.map(x => `0x${x.toString(16).toUpperCase().padStart(8, '0')},`).join(''));
 }
-writeFileSync(join(BASE_DIR, '../Lib/Blobs.cs'), [
+writeFileSync(join(CODE_DIR, 'Blobs.cs'), [
 	`// generated: ${new Date().toISOString()}`,
-	'namespace adraffy',
+	'namespace ADRaffy.ENSNormalize',
 	'{',
 	`    internal static class Blobs`,
     `    {`,
@@ -132,7 +133,6 @@ writeFileSync(join(BASE_DIR, '../Lib/Blobs.cs'), [
 	`    }`,
     `}`,
 ].join('\n'));
-
 
 const r1 = Magic.reader_from_bytes(bytes1);
 console.log(read_str(r1));

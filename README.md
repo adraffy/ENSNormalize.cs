@@ -26,7 +26,7 @@ ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh"); // "raffy🚴‍♂.et
 // works like Normalize()
 ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth"); // "1️⃣2️⃣.eth"
 ```
-### Output-based tokenization [Label](./ENSNormalize/Label.cs)
+### Output-based Tokenization [Label](./ENSNormalize/Label.cs)
 
 ```c#
 // string -> Label[]
@@ -96,7 +96,7 @@ Normalize name fragments for substring search:
 // string -> string
 // only throws InvalidLabelException w/DisallowedCharacterException
 ENSIP15.NormalizeFragment("AB--");
-ENSIP15.NormalizeFragment("\u0300");
+ENSIP15.NormalizeFragment("..\u0300");
 ENSIP15.NormalizeFragment("\u03BF\u043E");
 // note: Normalize() throws on these
 ```

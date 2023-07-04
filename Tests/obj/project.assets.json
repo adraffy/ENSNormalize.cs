@@ -117,7 +117,7 @@
           "build/net452/xunit.runner.visualstudio.props": {}
         }
       },
-      "ADRaffy.ENSNormalize/0.1.1": {
+      "ADRaffy.ENSNormalize/0.1.2": {
         "type": "project",
         "framework": ".NETFramework,Version=v4.6.1",
         "compile": {
@@ -1834,7 +1834,7 @@
           "build/netcoreapp2.1/xunit.runner.visualstudio.props": {}
         }
       },
-      "ADRaffy.ENSNormalize/0.1.1": {
+      "ADRaffy.ENSNormalize/0.1.2": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -3551,7 +3551,7 @@
           "build/netcoreapp2.1/xunit.runner.visualstudio.props": {}
         }
       },
-      "ADRaffy.ENSNormalize/0.1.1": {
+      "ADRaffy.ENSNormalize/0.1.2": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -5268,7 +5268,7 @@
           "build/netcoreapp2.1/xunit.runner.visualstudio.props": {}
         }
       },
-      "ADRaffy.ENSNormalize/0.1.1": {
+      "ADRaffy.ENSNormalize/0.1.2": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v5.0",
         "compile": {
@@ -9072,7 +9072,7 @@
         "xunit.runner.visualstudio.nuspec"
       ]
     },
-    "ADRaffy.ENSNormalize/0.1.1": {
+    "ADRaffy.ENSNormalize/0.1.2": {
       "type": "project",
       "path": "../ENSNormalize/ADRaffy.ENSNormalize.csproj",
       "msbuildProject": "../ENSNormalize/ADRaffy.ENSNormalize.csproj"
@@ -9080,7 +9080,7 @@
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.6.1": [
-      "ADRaffy.ENSNormalize >= 0.1.1",
+      "ADRaffy.ENSNormalize >= 0.1.2",
       "Microsoft.NET.Test.Sdk >= 17.5.0",
       "Newtonsoft.Json >= 13.0.3",
       "coverlet.collector >= 3.2.0",
@@ -9088,7 +9088,7 @@
       "xunit.runner.visualstudio >= 2.4.3"
     ],
     "net5.0": [
-      "ADRaffy.ENSNormalize >= 0.1.1",
+      "ADRaffy.ENSNormalize >= 0.1.2",
       "Microsoft.NET.Test.Sdk >= 17.5.0",
       "Newtonsoft.Json >= 13.0.3",
       "coverlet.collector >= 3.2.0",
@@ -9096,7 +9096,7 @@
       "xunit.runner.visualstudio >= 2.4.3"
     ],
     "net6.0": [
-      "ADRaffy.ENSNormalize >= 0.1.1",
+      "ADRaffy.ENSNormalize >= 0.1.2",
       "Microsoft.NET.Test.Sdk >= 17.5.0",
       "Newtonsoft.Json >= 13.0.3",
       "coverlet.collector >= 3.2.0",
@@ -9104,7 +9104,7 @@
       "xunit.runner.visualstudio >= 2.4.3"
     ],
     "net7.0": [
-      "ADRaffy.ENSNormalize >= 0.1.1",
+      "ADRaffy.ENSNormalize >= 0.1.2",
       "Microsoft.NET.Test.Sdk >= 17.5.0",
       "Newtonsoft.Json >= 13.0.3",
       "coverlet.collector >= 3.2.0",

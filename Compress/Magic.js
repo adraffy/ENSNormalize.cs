@@ -41,10 +41,18 @@ export class Magic {
 	}
 	bytes_from_symbols(symbols) {
 		let w = new BitWriter();
+		/*
 		for (let x of this.widths) {
 			w.binary(x, MAGIC_BITS);
 		}
 		w.binary(0, MAGIC_BITS);
+		*/
+		let prev = 0;
+		for (let x of this.widths) {
+			w.unary(x - prev); 
+			prev = x;
+		}
+		w.unary(0);
 		for (let x of symbols) {
 			this.write(w, x);
 		}
@@ -52,7 +60,12 @@ export class Magic {
 	}
 	static reader_from_bytes(bytes) {
 		let r = new BitReader(bytes);
-		let magic = new Magic(collect_while(() => r.binary(MAGIC_BITS)));
+		//let magic = new Magic(collect_while(() => r.binary(MAGIC_BITS)));
+		let w = 0;
+		let magic = new Magic(collect_while(() => {
+			let dw = r.unary();
+			if (dw) return w += dw;
+		}));
 		return () => magic.read(r);
 	}
 	// note: this is really inefficient

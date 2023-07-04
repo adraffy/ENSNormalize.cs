@@ -16,9 +16,12 @@ DumpSplit("бургер");
 DumpSplit("☝\uFE0F🏻");
 DumpSplit("💩Raffy.eth_");
 DumpSplit("");
+DumpSplit("x\u0303");
 
 DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("."));
 DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("raffy"));
+
+Console.WriteLine(ENSNormalize.ENSIP15.InvalidCompositions.ToHexSequence());
 
 Console.WriteLine($"Emojis: {ENSNormalize.ENSIP15.Emojis.Count}");
 Console.WriteLine($"Groups: {ENSNormalize.ENSIP15.Groups.Count}");

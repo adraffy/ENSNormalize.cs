@@ -35,6 +35,7 @@ namespace ADRaffy.ENSNormalize
         public readonly ReadOnlyIntSet ShouldEscape;
         public readonly ReadOnlyIntSet NFCCheck;
         public readonly ReadOnlyIntSet PossiblyValid;
+        public readonly ReadOnlyIntSet InvalidCompositions;
         public readonly IReadOnlyDictionary<int, IReadOnlyList<int>> Mapped;
         public readonly IReadOnlyDictionary<int, string> Fenced;
         public readonly IReadOnlyList<Group> Groups;
@@ -70,8 +71,7 @@ namespace ADRaffy.ENSNormalize
         static Dictionary<int, string> DecodeNamedCodepoints(Decoder dec)
         {
             Dictionary<int, string> ret = new();
-            int n = dec.ReadUnsigned();
-            foreach (int cp in dec.ReadSortedAscending(n))
+            foreach (int cp in dec.ReadSortedAscending(dec.ReadUnsigned()))
             {
                 ret.Add(cp, dec.ReadString());
             }
@@ -191,13 +191,8 @@ namespace ADRaffy.ENSNormalize
                     }
                 }
             }
-            union.UnionWith(NF.NFD(union));
-            PossiblyValid = new(union);
-
-            // precompute: special groups
-            GREEK = Groups.First(g => g.Name == "Greek");
-            ASCII = new(-1, GroupKind.ASCII, "ASCII", false, new(PossiblyValid.Where(cp => cp < 0x80)), ReadOnlyIntSet.EMPTY);
-            EMOJI = new(-1, GroupKind.Emoji, "Emoji", false, ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
+            PossiblyValid = new(union.Union(NF.NFD(union)));
+            InvalidCompositions = new(PossiblyValid.Except(union));
 
             // precompute: unique non-confusables
             HashSet<int> unique = new(union);
@@ -207,13 +202,14 @@ namespace ADRaffy.ENSNormalize
             {
                 Confusables.Add(cp, UNIQUE_PH);
             }
+
+            // precompute: special groups
+            GREEK = Groups.First(g => g.Name == "Greek");
+            ASCII = new(-1, GroupKind.ASCII, "ASCII", false, new(PossiblyValid.Where(cp => cp < 0x80)), ReadOnlyIntSet.EMPTY);
+            EMOJI = new(-1, GroupKind.Emoji, "Emoji", false, ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
+
         }
-    
-        // reset LTR context
-        static string ResetBidi(string s)
-        {
-            return $"{s}\u200E";
-        }
+        
         // format as {HEX}
         static string HexEscape(int cp)
         {
@@ -223,9 +219,9 @@ namespace ADRaffy.ENSNormalize
         // format as "X {HEX}" if possible
         public string SafeCodepoint(int cp)
         {
-            return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"{ResetBidi(SafeImplode(new int[] { cp }))} {HexEscape(cp)}";
+            return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"{SafeImplode(new int[] { cp })} {HexEscape(cp)}";
         }
-        public string SafeImplode(IReadOnlyList<int> cps)
+        public string SafeImplode(IReadOnlyList<int> cps, bool resetLTR = true)
         {
             int n = cps.Count;
             if (n == 0) return "";
@@ -244,6 +240,13 @@ namespace ADRaffy.ENSNormalize
                 {
                     sb.AppendCodepoint(cp);
                 }
+            }
+            if (resetLTR)
+            {
+                // some messages can be mixed-directional and result in spillover
+                // use 200E after a input string to reset the bidi direction
+                // https://www.w3.org/International/questions/qa-bidi-unicode-controls#exceptions
+                sb.AppendCodepoint(0x200E);
             }
             return sb.ToString();
         }
@@ -340,8 +343,8 @@ namespace ADRaffy.ENSNormalize
             CheckFenced(norm);
             int[] unique = chars.Distinct().ToArray();
             group = DetermineGroup(unique)[0];
-            CheckGroup(group, chars);
-            CheckWhole(group, unique);
+            CheckGroup(group, chars); // need text in order
+            CheckWhole(group, unique); // only need unique text
             return norm;
         }
 
@@ -353,7 +356,7 @@ namespace ADRaffy.ENSNormalize
                 Group[] next = prev.Where(g => g.Contains(cp)).ToArray();
                 if (next.Length == 0)
                 {   
-                    if (prev == Groups)
+                    if (InvalidCompositions.Contains(cp))
                     {
                         // the character was composed of valid parts
                         // but it's NFC form is invalid
@@ -368,7 +371,7 @@ namespace ADRaffy.ENSNormalize
                     }
                 }                
                 prev = next;
-                if (prev.Count == 1) break;
+                if (prev.Count == 1) break; // there is only one group left
             }
             return prev;
         }
@@ -389,6 +392,7 @@ namespace ADRaffy.ENSNormalize
                 List<int> decomposed = NF.NFD(cps);
                 for (int i = 1, e = decomposed.Count; i < e; i++)
                 {
+                    // https://www.unicode.org/reports/tr39/#Optional_Detection
                     if (NonSpacingMarks.Contains(decomposed[i]))
                     {
                         int j = i + 1;
@@ -396,15 +400,17 @@ namespace ADRaffy.ENSNormalize
                         {
                             for (int k = i; k < j; k++)
                             {
+                                // a. Forbid sequences of the same nonspacing mark.
                                 if (decomposed[k] == cp)
                                 {
                                     throw new NormException("duplicate non-spacing marks", SafeCodepoint(cp));
                                 }
                             }
                         }
+                        // b. Forbid sequences of more than 4 nonspacing marks (gc=Mn or gc=Me).
                         int n = j - i;
                         if (n > MaxNonSpacingMarks) {
-                            throw new NormException("excessive non-spacing marks", $"{ResetBidi(SafeImplode(decomposed.GetRange(i - 1, n)))} ({n}/${MaxNonSpacingMarks})");
+                            throw new NormException("excessive non-spacing marks", $"{SafeImplode(decomposed.GetRange(i - 1, n))} ({n}/${MaxNonSpacingMarks})");
 				        }
 				        i = j;
                     }

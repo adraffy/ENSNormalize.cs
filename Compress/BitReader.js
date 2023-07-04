@@ -16,9 +16,9 @@ export class BitReader {
 		return (_value & 1) > 0;
 	}
 	unary() {
-		let i = 0;
-		while (this.bit()) i++;
-		return i;
+		let x = 0;
+		while (this.bit()) x++;
+		return x;
 	}
 	binary(w) {
 		let x = 0;

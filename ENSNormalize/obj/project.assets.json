@@ -3141,7 +3141,7 @@
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
-    "version": "0.1.1",
+    "version": "0.1.2",
     "restore": {
       "projectUniqueName": "N:\\code\\ENSNormalize.cs\\ENSNormalize\\ADRaffy.ENSNormalize.csproj",
       "projectName": "ADRaffy.ENSNormalize",
