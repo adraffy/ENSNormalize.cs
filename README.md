@@ -125,7 +125,7 @@ ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEY
 using ADRaffy.ENSNormalize;
 
 // string -> string 
-// IEnumerable<int> -> int[]
+// IEnumerable<int> -> List<int>
 ENSNormalize.NF.NFC("\x65\u0300"); // [E5]
 ENSNormalize.NF.NFD("\xE5"); // [65 300]
 ```
