@@ -9,7 +9,6 @@
     <PackageId>ADRaffy.ENSNormalize</PackageId>
     <Authors>raffy.eth</Authors>
     <Description>Ethereum Name Service ENS-15 Name Normalization</Description>    
-    <RepositoryUrl>https://github.com/adraffy/ENSNormalize.cs</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageProjectUrl>https://adraffy.github.io/ens-normalize.js/test/resolver.html</PackageProjectUrl>
     <PackageTags>ENS;ENSIP-15;Normalize;NFC;NFD</PackageTags>

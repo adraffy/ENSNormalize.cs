@@ -2,8 +2,6 @@ import {BitReader} from './BitReader.js';
 import {BitWriter} from './BitWriter.js';
 import {require_sorted, require_unsigned, collect_while} from './utils.js';
 
-const MAGIC_BITS = 5; // 2^5 => 32 bit 
-
 export class Magic {
 	constructor(v) {
 		require_sorted(v);
@@ -41,12 +39,6 @@ export class Magic {
 	}
 	bytes_from_symbols(symbols) {
 		let w = new BitWriter();
-		/*
-		for (let x of this.widths) {
-			w.binary(x, MAGIC_BITS);
-		}
-		w.binary(0, MAGIC_BITS);
-		*/
 		let prev = 0;
 		for (let x of this.widths) {
 			w.unary(x - prev); 
@@ -60,7 +52,6 @@ export class Magic {
 	}
 	static reader_from_bytes(bytes) {
 		let r = new BitReader(bytes);
-		//let magic = new Magic(collect_while(() => r.binary(MAGIC_BITS)));
 		let w = 0;
 		let magic = new Magic(collect_while(() => {
 			let dw = r.unary();
