@@ -54,7 +54,7 @@ Label[] labels = ENSNormalize.ENSIP15.Split("💩Raffy.eth_");
 // string -> Label
 // never throws
 Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
-// note: this throws on "."
+// note: "." is a DisallowedCharacterException
 ```
 
 ### Normalization Properties
@@ -95,23 +95,23 @@ Normalize name fragments for substring search:
 ```c#
 // string -> string
 // only throws InvalidLabelException w/DisallowedCharacterException
-ENSIP15.NormalizeFragment("AB--");
-ENSIP15.NormalizeFragment("..\u0300");
-ENSIP15.NormalizeFragment("\u03BF\u043E");
+ENSNormalize.ENSIP15.NormalizeFragment("AB--");
+ENSNormalize.ENSIP15.NormalizeFragment("..\u0300");
+ENSNormalize.ENSIP15.NormalizeFragment("\u03BF\u043E");
 // note: Normalize() throws on these
 ```
 
 Construct safe strings:
 ```c#
 // int -> string
-ENSIP15.SafeCodepoint(0x303); // "◌̃"
+ENSNormalize.ENSIP15.SafeCodepoint(0x303); // "◌̃"
 // IReadOnlyList<int> -> string
-ENSIP15.SafeImplode(new int[]{ 0x303, 0xFE0F }); // "◌̃{FE0F}"
+ENSNormalize.ENSIP15.SafeImplode(new int[]{ 0x303, 0xFE0F }); // "◌̃{FE0F}"
 ```
 Determine if a character shouldn't be printed directly:
 ```c#
 // IReadOnlyCollection<int>
-ENSIP15.ShouldEscape.Contains(0x202E); // RIGHT-TO-LEFT OVERRIDE => true
+ENSNormalize.ENSIP15.ShouldEscape.Contains(0x202E); // RIGHT-TO-LEFT OVERRIDE => true
 ```
 Determine if a character is a combining mark:
 ```c#
@@ -124,7 +124,11 @@ ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEY
 ```c#
 using ADRaffy.ENSNormalize;
 
-// string -> string / IEnumerable<int> -> List<int>
+// string -> string
 ENSNormalize.NF.NFC("\x65\u0300"); // [E5]
-ENSNormalize.NF.NFD("\xE5"); // [65 300]
+ENSNormalize.NF.NFD("\xE5");       // [65 300]
+
+// IEnumerable<int> -> List<int>
+ENSNormalize.NF.NFC(new int[]{ 0x65, 0x300 }); // [0xE5]
+ENSNormalize.NF.NFD(new int[]{ 0xE5 });        // [0x65, 0x300]
 ```
