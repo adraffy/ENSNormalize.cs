@@ -5,10 +5,10 @@
 
 * Reference Implementation: [@adraffy/ens-normalize.js](https://github.com/adraffy/ens-normalize.js)
 	* Unicode: `15.0.0`
-	* Spec: [`962316964553fce6188e25a5166a4c1e906333adf53bdf2964c71dedc0f8e2c8`](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/spec.json)
-* Passes **100%** [Validation Tests](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/tests.json)
-* Passes **100%** [Normalization Tests](https://unicode.org/Public/15.0.0/ucd/NormalizationTest.txt)
-* Space Efficient: `~60KB` as [Inline Blobs](./ENSNormalize/Blobs.cs) via [make.js](./Compress/make.js)
+	* Spec Hash: [`962316964553fce6188e25a5166a4c1e906333adf53bdf2964c71dedc0f8e2c8`](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/spec.json)
+* Passes **100%** [ENSIP-15 Validation Tests](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/tests.json)
+* Passes **100%** [Unicode Normalization Tests](https://unicode.org/Public/15.0.0/ucd/NormalizationTest.txt)
+* Space Efficient: `~58KB .dll` using [Inline Blobs](./ENSNormalize/Blobs.cs) via [make.js](./Compress/make.js)
 * Legacy Support: `netstandard1.1`, `net451`, `netcoreapp3.1`
 
 ```c#
@@ -124,8 +124,7 @@ ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEY
 ```c#
 using ADRaffy.ENSNormalize;
 
-// string -> string 
-// IEnumerable<int> -> List<int>
+// string -> string / IEnumerable<int> -> List<int>
 ENSNormalize.NF.NFC("\x65\u0300"); // [E5]
 ENSNormalize.NF.NFD("\xE5"); // [65 300]
 ```

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace ADRaffy.ENSNormalize
@@ -56,11 +55,12 @@ namespace ADRaffy.ENSNormalize
             for (int i = 0; i < decomp1.Length; i++)
             {
                 Decomp.Add(decomp1[i], new int[] { decomp1A[i] });
-            };
+            }
             int[] decomp2 = dec.ReadSortedUnique();
-            int[] decomp2A = dec.ReadUnsortedDeltas(decomp2.Length);
-            int[] decomp2B = dec.ReadUnsortedDeltas(decomp2.Length);
-            for (int i = 0; i < decomp2.Length; i++)
+            int n = decomp2.Length;
+            int[] decomp2A = dec.ReadUnsortedDeltas(n);
+            int[] decomp2B = dec.ReadUnsortedDeltas(n);
+            for (int i = 0; i < n; i++)
             {
                 int cp = decomp2[i];
                 int cpA = decomp2A[i];
