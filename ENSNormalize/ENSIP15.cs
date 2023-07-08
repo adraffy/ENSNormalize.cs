@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Collections.ObjectModel;
 
 namespace ADRaffy.ENSNormalize
 {
@@ -36,20 +37,20 @@ namespace ADRaffy.ENSNormalize
         public readonly ReadOnlyIntSet NFCCheck;
         public readonly ReadOnlyIntSet PossiblyValid;
         public readonly ReadOnlyIntSet InvalidCompositions;
-        public readonly IReadOnlyDictionary<int, IReadOnlyList<int>> Mapped;
-        public readonly IReadOnlyDictionary<int, string> Fenced;
-        public readonly IReadOnlyList<Group> Groups;
-        public readonly IReadOnlyList<Whole> Wholes;
-        public readonly IReadOnlyList<EmojiSequence> Emojis;
+        public readonly IDictionary<int, ReadOnlyCollection<int>> Mapped;
+        public readonly IDictionary<int, string> Fenced;
+        public readonly ReadOnlyCollection<Group> Groups;
+        public readonly ReadOnlyCollection<Whole> Wholes;
+        public readonly ReadOnlyCollection<EmojiSequence> Emojis;
 
         private readonly EmojiNode EmojiRoot = new();
         private readonly Dictionary<int, Whole> Confusables = new();
         private readonly Whole UNIQUE_PH = new(ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
         private readonly Group GREEK, ASCII, EMOJI;
 
-        static Dictionary<int, IReadOnlyList<int>> DecodeMapped(Decoder dec)
+        static Dictionary<int, ReadOnlyCollection<int>> DecodeMapped(Decoder dec)
         {
-            Dictionary<int, IReadOnlyList<int>> ret = new();
+            Dictionary<int, ReadOnlyCollection<int>> ret = new();
             while (true)
             {
                 int w = dec.ReadUnsigned();
@@ -63,7 +64,7 @@ namespace ADRaffy.ENSNormalize
                     int[] v = dec.ReadUnsortedDeltas(n);
                     for (int i = 0; i < n; i++) m[i].Add(v[i]);
                 }
-                for (int i = 0; i < n; i++) ret.Add(keys[i], m[i].ToArray());
+                for (int i = 0; i < n; i++) ret.Add(keys[i], new(m[i]));
             }
             return ret;
         }
@@ -78,7 +79,16 @@ namespace ADRaffy.ENSNormalize
             return ret;
         }
 
-        static Group[] DecodeGroups(Decoder dec)
+        static IDictionary<K,V> AsReadOnlyDict<K,V>(Dictionary<K,V> dict)
+        {
+#if NETSTANDARD1_1 || NET35
+            return dict; // pls no bully
+#else
+            return new ReadOnlyDictionary<K,V>(dict);
+#endif
+        }
+
+        static List<Group> DecodeGroups(Decoder dec)
         {
             List<Group> ret = new();
             while (true)
@@ -90,7 +100,7 @@ namespace ADRaffy.ENSNormalize
                 bool cm = (bits & 2) != 0;
                 ret.Add(new(ret.Count, kind, name, cm, new(dec.ReadUnique()), new(dec.ReadUnique())));
             }
-            return ret.ToArray();
+            return ret;
         }
 
         public ENSIP15(NF nf, Decoder dec)
@@ -102,10 +112,10 @@ namespace ADRaffy.ENSNormalize
             MaxNonSpacingMarks = dec.ReadUnsigned();
             NonSpacingMarks = new(dec.ReadUnique());
             NFCCheck = new(dec.ReadUnique());
-            Fenced = DecodeNamedCodepoints(dec);
-            Mapped = DecodeMapped(dec);
-            Groups = DecodeGroups(dec);
-            Emojis = dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToList();
+            Fenced = AsReadOnlyDict(DecodeNamedCodepoints(dec));
+            Mapped = AsReadOnlyDict(DecodeMapped(dec));
+            Groups = new(DecodeGroups(dec));
+            Emojis = new(dec.ReadTree().Select(cps => new EmojiSequence(cps)).ToArray());
 
             // precompute: confusable extent complements
             List<Whole> wholes = new();
@@ -145,7 +155,7 @@ namespace ADRaffy.ENSNormalize
                     }
                 }
             }
-            Wholes = wholes.ToArray();
+            Wholes = new(wholes);
 
             // precompute: emoji trie
             foreach (EmojiSequence emoji in Emojis)
@@ -221,7 +231,7 @@ namespace ADRaffy.ENSNormalize
         {
             return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"{SafeImplode(new int[] { cp })} {HexEscape(cp)}";
         }
-        public string SafeImplode(IReadOnlyList<int> cps, bool resetLTR = true)
+        public string SafeImplode(IList<int> cps, bool resetLTR = true)
         {
             int n = cps.Count;
             if (n == 0) return "";
@@ -308,7 +318,7 @@ namespace ADRaffy.ENSNormalize
             List<OutputToken>? tokens = null;
             try
             {
-                tokens = OutputTokenize(input, NF.NFC, e => e.Normalized.ToArray()); // force a copy since we are exposing
+                tokens = OutputTokenize(input, NF.NFC, e => e.Normalized.ToList()); // make copy
                 int[] norm = NormalizedLabelFromTokens(tokens, out var g);
                 return new Label(input, tokens, norm, g);
             }
@@ -318,7 +328,7 @@ namespace ADRaffy.ENSNormalize
             }
         }
 
-        int[] NormalizedLabelFromTokens(IReadOnlyList<OutputToken> tokens, out Group group)
+        int[] NormalizedLabelFromTokens(List<OutputToken> tokens, out Group group)
         {
             if (tokens.Count == 0)  
             {
@@ -349,9 +359,9 @@ namespace ADRaffy.ENSNormalize
         }
 
         // assume: Groups.length > 1
-        IReadOnlyList<Group> DetermineGroup(IReadOnlyList<int> unique)
+        Group[] DetermineGroup(int[] unique)
         {
-            IReadOnlyList<Group> prev = Groups;
+            Group[] prev = Groups.ToArray();
             foreach (int cp in unique) {
                 Group[] next = prev.Where(g => g.Contains(cp)).ToArray();
                 if (next.Length == 0)
@@ -371,14 +381,14 @@ namespace ADRaffy.ENSNormalize
                     }
                 }                
                 prev = next;
-                if (prev.Count == 1) break; // there is only one group left
+                if (prev.Length == 1) break; // there is only one group left
             }
             return prev;
         }
 
         // assume: cps.length > 0
         // assume: cps[0] isn't CM
-        void CheckGroup(Group g, IReadOnlyList<int> cps)
+        void CheckGroup(Group g, int[] cps)
         {
             foreach (int cp in cps)
             {
@@ -418,7 +428,7 @@ namespace ADRaffy.ENSNormalize
             }
         }
 
-        void CheckWhole(Group g, IReadOnlyList<int> unique)
+        void CheckWhole(Group g, int[] unique)
         {
             int bound = 0;
             int[]? maker = null;
@@ -475,7 +485,7 @@ namespace ADRaffy.ENSNormalize
 
         // find the longest emoji that matches at index
         // if found, returns and updates the index
-        EmojiSequence? FindEmoji(IReadOnlyList<int> cps, ref int index)
+        EmojiSequence? FindEmoji(List<int> cps, ref int index)
         {
             EmojiNode? node = EmojiRoot;
             EmojiSequence? last = null;
@@ -491,7 +501,7 @@ namespace ADRaffy.ENSNormalize
             return last; // last emoji found
         }
 
-        List<OutputToken> OutputTokenize(IReadOnlyList<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, IReadOnlyList<int>> emojiStyler)
+        List<OutputToken> OutputTokenize(List<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, IList<int>> emojiStyler)
         {
             List<OutputToken> tokens = new();
             int n = cps.Count;
@@ -532,13 +542,13 @@ namespace ADRaffy.ENSNormalize
             return tokens;
         }
         // assume: cps.length > 0
-        void CheckFenced(IReadOnlyList<int> cps)
+        void CheckFenced(int[] cps)
         {
             if (Fenced.TryGetValue(cps[0], out var name))
             {
                 throw new NormException("leading fenced", name);
             }
-            int n = cps.Count;
+            int n = cps.Length;
             int last = -1;
             string prev = "";
             for (int i = 1; i < n; i++)
@@ -558,7 +568,7 @@ namespace ADRaffy.ENSNormalize
                 throw new NormException($"trailing fenced", prev);
             }
         }
-        void CheckCombiningMarks(IReadOnlyList<OutputToken> tokens)
+        void CheckCombiningMarks(List<OutputToken> tokens)
         {
             for (int i = 0, e = tokens.Count; i < e; i++)
             {
@@ -578,15 +588,15 @@ namespace ADRaffy.ENSNormalize
             }
         }
         // assume: ascii
-        static void CheckLabelExtension(IReadOnlyList<int> cps)
+        static void CheckLabelExtension(int[] cps)
         {
             const int HYPHEN = 0x2D;
-            if (cps.Count >= 4 && cps[2] == HYPHEN && cps[3] == HYPHEN)
+            if (cps.Length >= 4 && cps[2] == HYPHEN && cps[3] == HYPHEN)
             {
                 throw new NormException("invalid label extension", cps.Take(4).Implode());
             }
         }
-        static void CheckLeadingUnderscore(IReadOnlyList<int> cps)
+        static void CheckLeadingUnderscore(int[] cps)
         {
             const int UNDERSCORE = 0x5F;
             bool allowed = true;

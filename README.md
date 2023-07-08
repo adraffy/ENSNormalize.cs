@@ -9,7 +9,7 @@
 * Passes **100%** [ENSIP-15 Validation Tests](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/tests.json)
 * Passes **100%** [Unicode Normalization Tests](https://unicode.org/Public/15.0.0/ucd/NormalizationTest.txt)
 * Space Efficient: `~58KB .dll` using [Inline Blobs](./ENSNormalize/Blobs.cs) via [make.js](./Compress/make.js)
-* Legacy Support: `netstandard1.1`, `net451`, `netcoreapp3.1`
+* Legacy Support: `netstandard1.1`, `net35`, `netcoreapp3.1`
 
 ```c#
 using ADRaffy.ENSNormalize;
@@ -110,12 +110,12 @@ ENSNormalize.ENSIP15.SafeImplode(new int[]{ 0x303, 0xFE0F }); // "◌̃{FE0F}"
 ```
 Determine if a character shouldn't be printed directly:
 ```c#
-// IReadOnlyCollection<int>
+// ReadOnlyIntSet (like IReadOnlySet<int>)
 ENSNormalize.ENSIP15.ShouldEscape.Contains(0x202E); // RIGHT-TO-LEFT OVERRIDE => true
 ```
 Determine if a character is a combining mark:
 ```c#
-// IReadOnlyCollection<int>
+// ReadOnlyIntSet
 ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEYCAP => true
 ```
 

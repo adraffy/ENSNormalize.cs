@@ -10,6 +10,9 @@ foreach (Group g in ENSNormalize.ENSIP15.Groups)
 Console.WriteLine(ENSNormalize.NF.NFC("\x65\u0300").ToHexSequence());
 Console.WriteLine(ENSNormalize.NF.NFD("\xE8").ToHexSequence());
 
+Console.WriteLine(ENSNormalize.ENSIP15.SafeCodepoint(0x450));
+Console.WriteLine(ENSNormalize.ENSIP15.Normalize("\u0435\u0300"));
+
 DumpSplit("RAFFY.eTh");
 DumpSplit("xn--💩.eth");
 DumpSplit("бургер");
@@ -54,7 +57,7 @@ void DumpLabel(Label label)
     Console.Write($"[{label.Input.ToHexSequence()}]");
     if (label.Tokens != null)
     {
-        Console.Write($" <{string.Join("+", label.Tokens.Select(t => t.ToString()))}>");
+        Console.Write($" <{string.Join("+", label.Tokens.Select(t => t.ToString()).ToArray())}>");
     }
     if (label.Error == null)
     {

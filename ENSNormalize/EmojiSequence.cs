@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace ADRaffy.ENSNormalize
@@ -6,15 +7,15 @@ namespace ADRaffy.ENSNormalize
     public class EmojiSequence
     {
         public readonly string Form;
-        public readonly IReadOnlyList<int> Beautified;
-        public readonly IReadOnlyList<int> Normalized;
+        public readonly ReadOnlyCollection<int> Beautified;
+        public readonly ReadOnlyCollection<int> Normalized;
         public bool IsMangled { get => Beautified != Normalized; }
         internal EmojiSequence(int[] cps)
         {
-            Beautified = cps;
+            Beautified = new(cps);
             Form = cps.Implode();
             int[] norm = cps.Where(cp => cp != 0xFE0F).ToArray();
-            Normalized = norm.Length < cps.Length ? norm : cps;
+            Normalized = norm.Length < cps.Length ? new(norm) : Beautified;
         }
         public override string ToString() 
         {

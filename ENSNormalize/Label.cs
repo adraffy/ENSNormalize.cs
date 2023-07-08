@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ADRaffy.ENSNormalize
 {
@@ -7,18 +9,18 @@ namespace ADRaffy.ENSNormalize
         // error: [Input, Tokens?, Error ]
         // valid: [Input, Tokens, Group, Normalized ]
 
-        public readonly IReadOnlyList<int> Input;
-        public readonly IReadOnlyList<OutputToken>? Tokens;
+        public readonly IList<int> Input;
+        public readonly IList<OutputToken>? Tokens;
         public readonly NormException? Error;
-        public readonly IReadOnlyList<int>? Normalized;
+        public readonly int[]? Normalized;
         public readonly Group? Group;
 
-        internal Label(IReadOnlyList<int> input, List<OutputToken>? tokens, NormException e) {
+        internal Label(IList<int> input, IList<OutputToken>? tokens, NormException e) {
             Input = input;
             Tokens = tokens;
             Error = e;
         }
-        internal Label(IReadOnlyList<int> input, List<OutputToken> tokens, int[] cps, Group g) 
+        internal Label(IList<int> input, IList<OutputToken> tokens, int[] cps, Group g) 
         {
             Input = input;
             Tokens = tokens;

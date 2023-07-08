@@ -15,7 +15,7 @@ namespace ADRaffy.ENSNormalize
 
         // format strings/codepoints
         static public string ToHex(this int cp) => cp.ToString("X").PadLeft(2, '0');
-        static public string ToHexSequence(this IEnumerable<int> v) => string.Join(" ", v.Select(x => x.ToHex()));
+        static public string ToHexSequence(this IEnumerable<int> v) => string.Join(" ", v.Select(x => x.ToHex()).ToArray());
         static public string ToHexSequence(this string s) => s.Explode().ToHexSequence();
         
         // convert strings <=> codepoints

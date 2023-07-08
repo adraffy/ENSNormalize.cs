@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ADRaffy.ENSNormalize
 {
-    public class ReadOnlyIntSet : IReadOnlyCollection<int>
+    public class ReadOnlyIntSet : IEnumerable<int>
     {
         static public readonly ReadOnlyIntSet EMPTY = new(new int[0]);
 

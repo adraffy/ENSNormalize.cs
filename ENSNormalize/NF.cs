@@ -199,7 +199,7 @@ namespace ADRaffy.ENSNormalize
         }
 
         // TODO: change this to an iterator
-        internal List<int> ComposedFromPacked(IReadOnlyList<int> packed)
+        internal List<int> ComposedFromPacked(List<int> packed)
         {
             List<int> cps = new();
             List<int> stack = new();

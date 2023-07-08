@@ -57,7 +57,6 @@ namespace ADRaffy.ENSNormalize.Tests
                 string name = (string)test["name"]!;
                 string norm0 = (string?)test["norm"] ?? name;
                 bool shouldError = (bool?)test["error"] ?? false;
-                Console.WriteLine(name.ToHexSequence());
                 try
                 {
                     string norm = ENSNormalize.ENSIP15.Normalize(name);

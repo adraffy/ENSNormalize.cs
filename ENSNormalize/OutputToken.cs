@@ -4,13 +4,13 @@ namespace ADRaffy.ENSNormalize
 {
     public class OutputToken
     {
-        public readonly IReadOnlyList<int> Codepoints;
+        public readonly IList<int> Codepoints;
         public readonly EmojiSequence? Emoji;
         public bool IsEmoji { get => Emoji != null; }
-        public OutputToken(IReadOnlyList<int> cps, EmojiSequence? emoji = null)
+        public OutputToken(IList<int> cps, EmojiSequence? emoji = null)
         {
-            Emoji = emoji;
             Codepoints = cps;
+            Emoji = emoji;
         }
         public override string ToString() 
         {

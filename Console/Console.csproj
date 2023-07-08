@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net461;net5.0;net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net35;net461;net5.0;net6.0;net7.0</TargetFrameworks>
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
     <Nullable>disable</Nullable>
