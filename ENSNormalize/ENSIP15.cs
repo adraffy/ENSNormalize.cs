@@ -1,7 +1,7 @@
-﻿using System.Text;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System;
+using System.Text;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace ADRaffy.ENSNormalize
@@ -79,7 +79,7 @@ namespace ADRaffy.ENSNormalize
             return ret;
         }
 
-        static IDictionary<K,V> AsReadOnlyDict<K,V>(Dictionary<K,V> dict)
+        static IDictionary<K, V> AsReadOnlyDict<K, V>(Dictionary<K, V> dict) where K: notnull 
         {
 #if NETSTANDARD1_1 || NET35
             return dict; // pls no bully

@@ -59,9 +59,9 @@ Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
 
 ### Normalization Properties
 
-* [Group](./ENSNormalize/Group.cs) — `ENSIP15.Groups: IReadOnlyList<Group>`
-* [EmojiSequence](./ENSNormalize/EmojiSequence.cs) — `ENSIP15.Emojis: IReadOnlyList<EmojiSequence>`
-* [Whole](./ENSNormalize/Whole.cs) — `ENSIP15.Wholes: IReadOnlyList<Whole>`
+* [Group](./ENSNormalize/Group.cs) — `ENSIP15.Groups: IList<Group>`
+* [EmojiSequence](./ENSNormalize/EmojiSequence.cs) — `ENSIP15.Emojis: IList<EmojiSequence>`
+* [Whole](./ENSNormalize/Whole.cs) — `ENSIP15.Wholes: IList<Whole>`
 
 ### Error Handling
 
