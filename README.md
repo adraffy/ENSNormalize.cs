@@ -65,16 +65,11 @@ Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
 
 ### Error Handling
 
-All errors are safe to print. Functions that accept names as input wrap their exceptions in [InvalidLabelException](./ENSNormalize/InvalidLabelException.cs) for additional context.
+All errors are safe to print. [NormException](./ENSNormalize/NormException.cs) `{ Kind: string, Reason: string? }` is the base exception.  Functions that accept names as input wrap their exceptions in [InvalidLabelException](./ENSNormalize/InvalidLabelException.cs) `{ Label: string, Error: NormError }` for additional context.
 
-#### Errors with Additional Context
-* (Base) [NormException](./ENSNormalize/NormException.cs) `{ Kind: string, Reason: string? }`
-* [DisallowedCharacterException](./ENSNormalize/DisallowedCharacterException.cs) `{ Codepoint }`
-* [ConfusableException](./ENSNormalize/ConfusableException.cs) `{ Group, OtherGroup }`
-* [IllegalMixtureException](./ENSNormalize/IllegalMixtureException.cs) `{ Codepoint, Group, OtherGroup? }`
-
-#### Error Kinds
-
+* `"disallowed character"` — [DisallowedCharacterException](./ENSNormalize/DisallowedCharacterException.cs) `{ Codepoint }`
+* `"illegal mixture"` — [IllegalMixtureException](./ENSNormalize/IllegalMixtureException.cs) `{ Codepoint, Group, OtherGroup? }`
+* `"whole-script confusable"` — [ConfusableException](./ENSNormalize/ConfusableException.cs) `{ Group, OtherGroup }`
 * `"empty label"`
 * `"duplicate non-spacing marks"`
 * `"excessive non-spacing marks"`
@@ -85,9 +80,6 @@ All errors are safe to print. Functions that accept names as input wrap their ex
 * `"emoji + combining mark"`
 * `"invalid label extension"`
 * `"underscore allowed only at start"`
-* `"illegal mixture"`
-* `"whole-script confusable"`
-* `"disallowed character"`
 
 ### Utilities
 
@@ -105,7 +97,7 @@ Construct safe strings:
 ```c#
 // int -> string
 ENSNormalize.ENSIP15.SafeCodepoint(0x303); // "◌̃"
-// IReadOnlyList<int> -> string
+// IList<int> -> string
 ENSNormalize.ENSIP15.SafeImplode(new int[]{ 0x303, 0xFE0F }); // "◌̃{FE0F}"
 ```
 Determine if a character shouldn't be printed directly:
@@ -125,8 +117,8 @@ ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEY
 using ADRaffy.ENSNormalize;
 
 // string -> string
-ENSNormalize.NF.NFC("\x65\u0300"); // [E5]
-ENSNormalize.NF.NFD("\xE5");       // [65 300]
+ENSNormalize.NF.NFC("\x65\u0300"); // "\u00E5"
+ENSNormalize.NF.NFD("\xE5");       // "\x65\u0300"
 
 // IEnumerable<int> -> List<int>
 ENSNormalize.NF.NFC(new int[]{ 0x65, 0x300 }); // [0xE5]

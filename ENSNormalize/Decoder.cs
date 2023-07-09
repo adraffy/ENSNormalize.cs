@@ -104,8 +104,8 @@ namespace ADRaffy.ENSNormalize
         {
             List<int> ret = new(ReadSortedAscending(ReadUnsigned()));
             int n = ReadUnsigned();
-            int[] vX = ReadSortedAscending(n).ToArray();
-            int[] vS = ReadUnsortedDeltas(n).ToArray();
+            int[] vX = ReadSortedAscending(n);
+            int[] vS = ReadUnsortedDeltas(n);
             for (int i = 0; i < n; i++)
             {                
                 for (int x = vX[i], e = x + vS[i]; x < e; x++)

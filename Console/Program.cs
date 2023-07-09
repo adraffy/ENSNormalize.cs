@@ -11,7 +11,7 @@ Console.WriteLine(ENSNormalize.NF.NFC("\x65\u0300").ToHexSequence());
 Console.WriteLine(ENSNormalize.NF.NFD("\xE8").ToHexSequence());
 
 Console.WriteLine(ENSNormalize.ENSIP15.SafeCodepoint(0x450));
-Console.WriteLine(ENSNormalize.ENSIP15.Normalize("\u0435\u0300"));
+//Console.WriteLine(ENSNormalize.ENSIP15.Normalize("\u0435\u0300"));
 
 DumpSplit("RAFFY.eTh");
 DumpSplit("xn--💩.eth");
