@@ -230,7 +230,7 @@ namespace ADRaffy.ENSNormalize
         // format as "X {HEX}" if possible
         public string SafeCodepoint(int cp)
         {
-            return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"{SafeImplode(new int[] { cp })} {HexEscape(cp)}";
+            return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"\"{SafeImplode(new int[] { cp })}\" {HexEscape(cp)}";
         }
         public string SafeImplode(IList<int> cps)
         {
@@ -303,7 +303,7 @@ namespace ADRaffy.ENSNormalize
                 try
                 {
                     IList<OutputToken> tokens = tokenizer(cps);
-                    if (labels.Length == 1 && tokens.Count == 0) return "";
+                    if (labels.Length == 1 && tokens.Count == 0) return ""; // single null label allowance
                     if (sb.Length > 0) sb.Append(STOP_CH);
                     sb.AppendCodepoints(fn(tokens));
                 }
@@ -327,7 +327,7 @@ namespace ADRaffy.ENSNormalize
                 try
                 {
                     tokens = OutputTokenize(cps, NF.NFC, e => e.Normalized.ToList()); // make copy
-                    if (labels.Length == 1 && tokens.Count == 0) break;
+                    if (labels.Length == 1 && tokens.Count == 0) break; // single null label allowance
                     int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
                     Group group = CheckValid(norm, tokens);
                     ret.Add(new(cps, tokens, norm, group));
