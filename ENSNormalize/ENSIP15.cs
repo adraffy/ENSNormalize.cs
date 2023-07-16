@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection.Emit;
 
 namespace ADRaffy.ENSNormalize
 {
@@ -30,18 +31,18 @@ namespace ADRaffy.ENSNormalize
 
         public readonly NF NF;
         public readonly int MaxNonSpacingMarks;
+        public readonly ReadOnlyIntSet ShouldEscape;
         public readonly ReadOnlyIntSet Ignored;
         public readonly ReadOnlyIntSet CombiningMarks;
         public readonly ReadOnlyIntSet NonSpacingMarks;
-        public readonly ReadOnlyIntSet ShouldEscape;
         public readonly ReadOnlyIntSet NFCCheck;
         public readonly ReadOnlyIntSet PossiblyValid;
         public readonly ReadOnlyIntSet InvalidCompositions;
-        public readonly IDictionary<int, ReadOnlyCollection<int>> Mapped;
         public readonly IDictionary<int, string> Fenced;
+        public readonly IDictionary<int, ReadOnlyCollection<int>> Mapped;
         public readonly ReadOnlyCollection<Group> Groups;
-        public readonly ReadOnlyCollection<Whole> Wholes;
         public readonly ReadOnlyCollection<EmojiSequence> Emojis;
+        public readonly ReadOnlyCollection<Whole> Wholes;
 
         private readonly EmojiNode EmojiRoot = new();
         private readonly Dictionary<int, Whole> Confusables = new();
@@ -231,7 +232,7 @@ namespace ADRaffy.ENSNormalize
         {
             return ShouldEscape.Contains(cp) ? HexEscape(cp) : $"{SafeImplode(new int[] { cp })} {HexEscape(cp)}";
         }
-        public string SafeImplode(IList<int> cps, bool resetLTR = true)
+        public string SafeImplode(IList<int> cps)
         {
             int n = cps.Count;
             if (n == 0) return "";
@@ -251,27 +252,29 @@ namespace ADRaffy.ENSNormalize
                     sb.AppendCodepoint(cp);
                 }
             }
-            if (resetLTR)
-            {
-                // some messages can be mixed-directional and result in spillover
-                // use 200E after a input string to reset the bidi direction
-                // https://www.w3.org/International/questions/qa-bidi-unicode-controls#exceptions
-                sb.AppendCodepoint(0x200E);
-            }
+            // some messages can be mixed-directional and result in spillover
+            // use 200E after a input string to reset the bidi direction
+            // https://www.w3.org/International/questions/qa-bidi-unicode-controls#exceptions
+            sb.AppendCodepoint(0x200E);
             return sb.ToString();
         }
 
         // throws
         public string Normalize(string name)
         {
-            return Transform(name, cps => NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Normalized), out _));
+            return Transform(name, cps => OutputTokenize(cps, NF.NFC, e => e.Normalized), tokens => {
+                int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
+                CheckValid(norm, tokens);
+                return norm;
+            });
         }
         // throws
         public string Beautify(string name)
         {
-            return Transform(name, cps => {
-                int[] norm = NormalizedLabelFromTokens(OutputTokenize(cps, NF.NFC, e => e.Beautified), out var g);
-                if (g != GREEK)
+            return Transform(name, cps => OutputTokenize(cps, NF.NFC, e => e.Beautified), tokens => {
+                int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
+                Group group = CheckValid(norm, tokens);
+                if (group != GREEK)
                 {
                     for (int i = 0, e = norm.Length; i < e; i++)
                     {
@@ -285,19 +288,24 @@ namespace ADRaffy.ENSNormalize
         // only throws InvalidLabelException w/DisallowedCharacterException
         public string NormalizeFragment(string name, bool decompose = false)
         {
-            return Transform(name, cps => OutputTokenize(cps, decompose ? NF.NFD : NF.NFC, e => e.Normalized).SelectMany(t => t.Codepoints));
+            return Transform(name, cps => OutputTokenize(cps, decompose ? NF.NFD : NF.NFC, e => e.Normalized), tokens => {
+                return tokens.SelectMany(t => t.Codepoints);
+            });
         }
 
-        string Transform(string name, Func<List<int>, IEnumerable<int>> fn)
+        string Transform(string name, Func<List<int>, IList<OutputToken>> tokenizer, Func<IList<OutputToken>, IEnumerable<int>> fn)
         {
             StringBuilder sb = new(name.Length + 16); // guess
-            foreach (string label in name.Split(STOP_CH))
+            string[] labels = name.Split(STOP_CH);
+            foreach (string label in labels)
             {
                 List<int> cps = label.Explode();
                 try
                 {
+                    IList<OutputToken> tokens = tokenizer(cps);
+                    if (labels.Length == 1 && tokens.Count == 0) return "";
                     if (sb.Length > 0) sb.Append(STOP_CH);
-                    sb.AppendCodepoints(fn(cps));
+                    sb.AppendCodepoints(fn(tokens));
                 }
                 catch (NormException e)
                 {
@@ -308,63 +316,72 @@ namespace ADRaffy.ENSNormalize
         }
 
         // never throws
-        public Label[] Split(string name)
+        public IList<Label> Split(string name)
         {
-            return name.Split(STOP_CH).Select(NormalizeLabel).ToArray();
-        }
-        public Label NormalizeLabel(string label)
-        {
-            List<int> input = label.Explode();
-            List<OutputToken>? tokens = null;
-            try
+            string[] labels = name.Split(STOP_CH);
+            List<Label> ret = new(labels.Length);
+            foreach (string label in labels)
             {
-                tokens = OutputTokenize(input, NF.NFC, e => e.Normalized.ToList()); // make copy
-                int[] norm = NormalizedLabelFromTokens(tokens, out var g);
-                return new Label(input, tokens, norm, g);
+                List<int> cps = label.Explode();
+                IList<OutputToken>? tokens = null;
+                try
+                {
+                    tokens = OutputTokenize(cps, NF.NFC, e => e.Normalized.ToList()); // make copy
+                    if (labels.Length == 1 && tokens.Count == 0) break;
+                    int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
+                    Group group = CheckValid(norm, tokens);
+                    ret.Add(new(cps, tokens, norm, group));
+                }
+                catch (NormException e)
+                {
+                    ret.Add(new(cps, tokens, e));
+                }
             }
-            catch (NormException e)
-            {
-                return new Label(input, tokens, e);
-            }
+            return ret;               
         }
 
-        int[] NormalizedLabelFromTokens(List<OutputToken> tokens, out Group group)
+        Group CheckValid(int[] norm, IList<OutputToken> tokens)
         {
-            if (tokens.Count == 0)  
+            if (norm.Length == 0)  
             {
                 throw new NormException("empty label");
             }
-            int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
             CheckLeadingUnderscore(norm);
             bool emoji = tokens.Count > 1 || tokens[0].IsEmoji;
             if (!emoji && norm.All(cp => cp < 0x80))
             {
                 CheckLabelExtension(norm);
-                group = ASCII;
-                return norm;
+                return ASCII;
             }
             int[] chars = tokens.Where(t => !t.IsEmoji).SelectMany(x => x.Codepoints).ToArray();
             if (emoji && chars.Length == 0)
             {
-                group = EMOJI;
-                return norm;
+                return EMOJI;
             }
             CheckCombiningMarks(tokens);
             CheckFenced(norm);
             int[] unique = chars.Distinct().ToArray();
-            group = DetermineGroup(unique)[0];
+            Group group = DetermineGroup(unique);
             CheckGroup(group, chars); // need text in order
             CheckWhole(group, unique); // only need unique text
-            return norm;
+            return group;
         }
 
         // assume: Groups.length > 1
-        Group[] DetermineGroup(int[] unique)
+        Group DetermineGroup(int[] unique)
         {
-            Group[] prev = Groups.ToArray();
+            Group[] gs = Groups.ToArray();
+            int prev = gs.Length;
             foreach (int cp in unique) {
-                Group[] next = prev.Where(g => g.Contains(cp)).ToArray();
-                if (next.Length == 0)
+                int next = 0;
+                for (int i = 0; i < prev; i++)
+                {
+                    if (gs[i].Contains(cp))
+                    {
+                        gs[next++] = gs[i];
+                    }
+                }
+                if (next == 0)
                 {   
                     if (InvalidCompositions.Contains(cp))
                     {
@@ -377,13 +394,13 @@ namespace ADRaffy.ENSNormalize
                         // there is no group that contains all these characters
                         // throw using the highest priority group that matched
                         // https://www.unicode.org/reports/tr39/#mixed_script_confusables
-                        throw CreateMixtureException(prev[0], cp);
+                        throw CreateMixtureException(gs[0], cp);
                     }
-                }                
+                }
                 prev = next;
-                if (prev.Length == 1) break; // there is only one group left
+                if (prev == 1) break; // there is only one group left
             }
-            return prev;
+            return gs[0];
         }
 
         // assume: cps.length > 0
@@ -501,7 +518,7 @@ namespace ADRaffy.ENSNormalize
             return last; // last emoji found
         }
 
-        List<OutputToken> OutputTokenize(List<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, IList<int>> emojiStyler)
+        IList<OutputToken> OutputTokenize(List<int> cps, Func<List<int>, List<int>> nf, Func<EmojiSequence, IList<int>> emojiStyler)
         {
             List<OutputToken> tokens = new();
             int n = cps.Count;
@@ -565,24 +582,26 @@ namespace ADRaffy.ENSNormalize
             }
             if (last == n)
             {
-                throw new NormException($"trailing fenced", prev);
+                throw new NormException("trailing fenced", prev);
             }
         }
-        void CheckCombiningMarks(List<OutputToken> tokens)
+        void CheckCombiningMarks(IList<OutputToken> tokens)
         {
             for (int i = 0, e = tokens.Count; i < e; i++)
             {
                 OutputToken t = tokens[i];
-                if (!t.IsEmoji && CombiningMarks.Contains(t.Codepoints[0]))
+                if (t.IsEmoji) continue;
+                int cp = t.Codepoints[0];
+                if (CombiningMarks.Contains(cp))
                 {
                     if (i == 0)
                     {
-                        throw new NormException("leading combining mark", SafeCodepoint(t.Codepoints[0]));
+                        throw new NormException("leading combining mark", SafeCodepoint(cp));
                     }
                     else 
                     {
                         // note: the previous token must an EmojiSequence
-                        throw new NormException("emoji + combining mark", $"{tokens[i - 1].Codepoints.Implode()} + {SafeCodepoint(t.Codepoints[0])}");
+                        throw new NormException("emoji + combining mark", $"{tokens[i - 1].Emoji!.Form} + {SafeCodepoint(cp)}");
                     }
                 }
             }

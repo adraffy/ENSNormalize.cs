@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using ADRaffy.ENSNormalize;
 
@@ -11,8 +12,8 @@ Console.WriteLine(ENSNormalize.NF.NFC("\x65\u0300").ToHexSequence());
 Console.WriteLine(ENSNormalize.NF.NFD("\xE8").ToHexSequence());
 
 Console.WriteLine(ENSNormalize.ENSIP15.SafeCodepoint(0x450));
-//Console.WriteLine(ENSNormalize.ENSIP15.Normalize("\u0435\u0300"));
 
+DumpSplit("");
 DumpSplit("RAFFY.eTh");
 DumpSplit("xn--💩.eth");
 DumpSplit("бургер");
@@ -20,9 +21,6 @@ DumpSplit("☝\uFE0F🏻");
 DumpSplit("💩Raffy.eth_");
 DumpSplit("");
 DumpSplit("x\u0303");
-
-DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("."));
-DumpLabel(ENSNormalize.ENSIP15.NormalizeLabel("raffy"));
 
 Console.WriteLine(ENSNormalize.ENSIP15.InvalidCompositions.ToHexSequence());
 
@@ -42,9 +40,9 @@ Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("\u03BF\u043E").ToHexSe
 
 void DumpSplit(string name)
 {
-    Label[] labels = ENSNormalize.ENSIP15.Split(name);
+    IList<Label> labels = ENSNormalize.ENSIP15.Split(name);
     Console.Write('[');
-    if (labels.Length > 0) Console.WriteLine();
+    if (labels.Count > 0) Console.WriteLine();
     foreach (Label x in labels) 
     {
         Console.Write("  ");

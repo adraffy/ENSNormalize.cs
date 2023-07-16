@@ -47,14 +47,9 @@ Label[] labels = ENSNormalize.ENSIP15.Split("💩Raffy.eth_");
 //     Tokens: [ 
 //       OutputToken { Codepoints: [ 101, 116, 104, 95 ] }
 //     ],
-//     Error: NormError { Kind: "underscore allowed only at start" }
+//     Error: NormException { Kind: "underscore allowed only at start" }
 //   }
 // ]
-
-// string -> Label
-// never throws
-Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
-// note: "." is a DisallowedCharacterException
 ```
 
 ### Normalization Properties
@@ -65,7 +60,7 @@ Label label = ENSNormalize.ENSIP15.NormalizeLabel("ABC");
 
 ### Error Handling
 
-All errors are safe to print. [NormException](./ENSNormalize/NormException.cs) `{ Kind: string, Reason: string? }` is the base exception.  Functions that accept names as input wrap their exceptions in [InvalidLabelException](./ENSNormalize/InvalidLabelException.cs) `{ Label: string, Error: NormError }` for additional context.
+All errors are safe to print. [NormException](./ENSNormalize/NormException.cs) `{ Kind: string, Reason: string? }` is the base exception.  Functions that accept names as input wrap their exceptions in [InvalidLabelException](./ENSNormalize/InvalidLabelException.cs) `{ Label: string, Error: NormException }` for additional context.
 
 * `"disallowed character"` — [DisallowedCharacterException](./ENSNormalize/DisallowedCharacterException.cs) `{ Codepoint }`
 * `"illegal mixture"` — [IllegalMixtureException](./ENSNormalize/IllegalMixtureException.cs) `{ Codepoint, Group, OtherGroup? }`
@@ -97,6 +92,7 @@ Construct safe strings:
 ```c#
 // int -> string
 ENSNormalize.ENSIP15.SafeCodepoint(0x303); // "◌̃"
+ENSNormalize.ENSIP15.SafeCodepoint(0xFE0F); // "{FE0F}"
 // IList<int> -> string
 ENSNormalize.ENSIP15.SafeImplode(new int[]{ 0x303, 0xFE0F }); // "◌̃{FE0F}"
 ```
@@ -117,10 +113,10 @@ ENSNormalize.ENSIP15.CombiningMarks.Contains(0x20E3); // COMBINING ENCLOSING KEY
 using ADRaffy.ENSNormalize;
 
 // string -> string
-ENSNormalize.NF.NFC("\x65\u0300"); // "\u00E5"
-ENSNormalize.NF.NFD("\xE5");       // "\x65\u0300"
+ENSNormalize.NF.NFC("\x65\u0300"); // "\xE8"
+ENSNormalize.NF.NFD("\xE8");       // "\x65\u0300"
 
 // IEnumerable<int> -> List<int>
-ENSNormalize.NF.NFC(new int[]{ 0x65, 0x300 }); // [0xE5]
-ENSNormalize.NF.NFD(new int[]{ 0xE5 });        // [0x65, 0x300]
+ENSNormalize.NF.NFC(new int[]{ 0x65, 0x300 }); // [0xE8]
+ENSNormalize.NF.NFD(new int[]{ 0xE8 });        // [0x65, 0x300]
 ```

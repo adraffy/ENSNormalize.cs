@@ -11,7 +11,6 @@
 	},
 	{
 		"name": "",
-		"error": true,
 		"comment": "Null"
 	},
 	{
@@ -94339,11 +94338,6 @@
 		"name": "⛹🏽‍➡️",
 		"error": true,
 		"comment": "disallowed character: {200D}"
-	},
-	{
-		"name": "",
-		"error": true,
-		"comment": "empty label"
 	},
 	{
 		"name": "‍7777",
