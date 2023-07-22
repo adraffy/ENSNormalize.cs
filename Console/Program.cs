@@ -22,11 +22,10 @@ DumpSplit("💩Raffy.eth_");
 DumpSplit("");
 DumpSplit("x\u0303");
 
-Console.WriteLine(ENSNormalize.ENSIP15.InvalidCompositions.ToHexSequence());
-
 Console.WriteLine($"Emojis: {ENSNormalize.ENSIP15.Emojis.Count}");
 Console.WriteLine($"Groups: {ENSNormalize.ENSIP15.Groups.Count}");
 
+Console.WriteLine(ENSNormalize.ENSIP15.Normalize("").ToHexSequence());
 Console.WriteLine(ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh").ToHexSequence());
 Console.WriteLine(ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth").ToHexSequence());
 

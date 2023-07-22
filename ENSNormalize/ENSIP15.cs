@@ -37,7 +37,6 @@ namespace ADRaffy.ENSNormalize
         public readonly ReadOnlyIntSet NonSpacingMarks;
         public readonly ReadOnlyIntSet NFCCheck;
         public readonly ReadOnlyIntSet PossiblyValid;
-        public readonly ReadOnlyIntSet InvalidCompositions;
         public readonly IDictionary<int, string> Fenced;
         public readonly IDictionary<int, ReadOnlyCollection<int>> Mapped;
         public readonly ReadOnlyCollection<Group> Groups;
@@ -203,7 +202,6 @@ namespace ADRaffy.ENSNormalize
                 }
             }
             PossiblyValid = new(union.Union(NF.NFD(union)));
-            InvalidCompositions = new(PossiblyValid.Except(union));
 
             // precompute: unique non-confusables
             HashSet<int> unique = new(union);
@@ -218,7 +216,6 @@ namespace ADRaffy.ENSNormalize
             GREEK = Groups.First(g => g.Name == "Greek");
             ASCII = new(-1, GroupKind.ASCII, "ASCII", false, new(PossiblyValid.Where(cp => cp < 0x80)), ReadOnlyIntSet.EMPTY);
             EMOJI = new(-1, GroupKind.Emoji, "Emoji", false, ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
-
         }
         
         // format as {HEX}
@@ -295,6 +292,7 @@ namespace ADRaffy.ENSNormalize
 
         string Transform(string name, Func<List<int>, IList<OutputToken>> tokenizer, Func<IList<OutputToken>, IEnumerable<int>> fn)
         {
+            if (name.Length == 0) return ""; // empty name allowance
             StringBuilder sb = new(name.Length + 16); // guess
             string[] labels = name.Split(STOP_CH);
             foreach (string label in labels)
@@ -303,7 +301,6 @@ namespace ADRaffy.ENSNormalize
                 try
                 {
                     IList<OutputToken> tokens = tokenizer(cps);
-                    if (labels.Length == 1 && tokens.Count == 0) return ""; // single null label allowance
                     if (sb.Length > 0) sb.Append(STOP_CH);
                     sb.AppendCodepoints(fn(tokens));
                 }
@@ -320,6 +317,7 @@ namespace ADRaffy.ENSNormalize
         {
             string[] labels = name.Split(STOP_CH);
             List<Label> ret = new(labels.Length);
+            if (name.Length == 0) return ret; // empty name allowance
             foreach (string label in labels)
             {
                 List<int> cps = label.Explode();
@@ -327,7 +325,6 @@ namespace ADRaffy.ENSNormalize
                 try
                 {
                     tokens = OutputTokenize(cps, NF.NFC, e => e.Normalized.ToList()); // make copy
-                    if (labels.Length == 1 && tokens.Count == 0) break; // single null label allowance
                     int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
                     Group group = CheckValid(norm, tokens);
                     ret.Add(new(cps, tokens, norm, group));
@@ -337,7 +334,7 @@ namespace ADRaffy.ENSNormalize
                     ret.Add(new(cps, tokens, e));
                 }
             }
-            return ret;               
+            return ret;
         }
 
         Group CheckValid(int[] norm, IList<OutputToken> tokens)
@@ -383,7 +380,7 @@ namespace ADRaffy.ENSNormalize
                 }
                 if (next == 0)
                 {   
-                    if (InvalidCompositions.Contains(cp))
+                    if (!Groups.Any(g => g.Contains(cp)))
                     {
                         // the character was composed of valid parts
                         // but it's NFC form is invalid
