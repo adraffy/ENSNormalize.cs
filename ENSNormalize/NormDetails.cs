@@ -7,7 +7,6 @@ namespace ADRaffy.ENSNormalize
     public class NormDetails
     {
         public readonly string Name;
-        public readonly string Desc;
         public readonly HashSet<Group> Groups;
         public readonly HashSet<EmojiSequence> Emojis;
         public readonly bool PossiblyConfusing;

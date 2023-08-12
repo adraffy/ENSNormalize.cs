@@ -26,8 +26,21 @@ ENSNormalize.ENSIP15.Normalize("RaFFY🚴‍♂️.eTh"); // "raffy🚴‍♂.et
 // works like Normalize()
 ENSNormalize.ENSIP15.Beautify("1⃣2⃣.eth"); // "1️⃣2️⃣.eth"
 ```
-### Output-based Tokenization [Label](./ENSNormalize/Label.cs)
+### Additional [NormDetails](./ENSNormalize/NormDetails.cs) (Experimental)
+```c#
+// works like Normalize(), throws on invalid names
+// string -> NormDetails
+NormDetails details = ENSNormalize.ENSIP15.NormalizeDetails("💩ì.a");
 
+string Name; // normalized name
+bool PossiblyConfusing; // if name should be carefully reviewed
+string GroupDescription = "Latin+Emoji"; // group summary for name
+HashSet<Group> Groups; // unique groups in name
+HashSet<EmojiSequence> Emojis; // unique emoji in name
+bool HasZWJEmoji; // if any emoji contain 200D
+```
+
+### Output-based Tokenization [Label](./ENSNormalize/Label.cs)
 ```c#
 // string -> Label[]
 // never throws
