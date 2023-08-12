@@ -37,6 +37,13 @@ Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("AB--").ToHexSequence()
 Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("\u0300").ToHexSequence());
 Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("\u03BF\u043E").ToHexSequence());
 
+// experimental
+DumpDetails("a");
+DumpDetails("💩");
+DumpDetails("💩a");
+DumpDetails("💩è.a");
+DumpDetails("💩ì.a");
+
 void DumpSplit(string name)
 {
     IList<Label> labels = ENSNormalize.ENSIP15.Split(name);
@@ -63,6 +70,20 @@ void DumpLabel(Label label)
     else
     {
         Console.Write($" \"{label.Error.Message}\"");
+    }
+    Console.WriteLine();
+}
+void DumpDetails(string name)
+{
+    NormDetails details = ENSNormalize.ENSIP15.NormalizeDetails(name);
+    Console.Write($"[{name}] => [{details.Name.ToHexSequence()}] <{details.Desc}>");
+    if (details.Emojis.Count > 0)
+    {
+        Console.Write($" Emoji({details.Emojis.Count})");
+    }
+    if (details.PossiblyConfusing)
+    {
+        Console.Write(" **Possibly Confusing**");
     }
     Console.WriteLine();
 }

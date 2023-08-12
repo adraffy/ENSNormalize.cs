@@ -46,7 +46,10 @@ namespace ADRaffy.ENSNormalize
         private readonly EmojiNode EmojiRoot = new();
         private readonly Dictionary<int, Whole> Confusables = new();
         private readonly Whole UNIQUE_PH = new(ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
-        private readonly Group GREEK, ASCII, EMOJI;
+        private readonly Group LATIN, GREEK, ASCII, EMOJI;
+
+        // experimental
+        private readonly string[] POSSIBLY_CONFUSING = new string[] { "ą", "ç", "ę", "ş", "ì", "í", "î", "ï", "ǐ", "ł" };
 
         static Dictionary<int, ReadOnlyCollection<int>> DecodeMapped(Decoder dec)
         {
@@ -213,6 +216,7 @@ namespace ADRaffy.ENSNormalize
             }
 
             // precompute: special groups
+            LATIN = Groups.First(g => g.Name == "Latin");
             GREEK = Groups.First(g => g.Name == "Greek");
             ASCII = new(-1, GroupKind.ASCII, "ASCII", false, new(PossiblyValid.Where(cp => cp < 0x80)), ReadOnlyIntSet.EMPTY);
             EMOJI = new(-1, GroupKind.Emoji, "Emoji", false, ReadOnlyIntSet.EMPTY, ReadOnlyIntSet.EMPTY);
@@ -335,6 +339,35 @@ namespace ADRaffy.ENSNormalize
                 }
             }
             return ret;
+        }
+        // experimental
+        // throws
+        public NormDetails NormalizeDetails(string name)
+        {
+            HashSet<Group> groups = new();
+            HashSet<EmojiSequence> emojis = new();
+            string norm = Transform(name, cps => OutputTokenize(cps, NF.NFC, e => e.Normalized), tokens => {
+                int[] norm = tokens.SelectMany(t => t.Codepoints).ToArray();
+                Group group = CheckValid(norm, tokens);
+                emojis.UnionWith(tokens.Where(t => t.IsEmoji).Select(t => t.Emoji!));
+                if (group == LATIN && tokens.All(t => t.IsEmoji || t.Codepoints.All(cp => cp < 0x80)))
+                {
+                    group = ASCII;
+                }
+                groups.Add(group);
+                return norm;
+            });
+            if (groups.Contains(LATIN))
+            {
+                groups.Remove(ASCII);
+            }
+            if (emojis.Count > 0)
+            {
+                groups.Add(EMOJI);
+            }
+            bool confusing = POSSIBLY_CONFUSING.Any(norm.Contains);
+            string desc = string.Join("+", groups.Select(g => g.Name).ToArray());
+            return new(norm, desc, emojis, confusing);
         }
 
         Group CheckValid(int[] norm, IList<OutputToken> tokens)
