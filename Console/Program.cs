@@ -40,6 +40,8 @@ Console.WriteLine(ENSNormalize.ENSIP15.NormalizeFragment("\u03BF\u043E").ToHexSe
 // experimental
 DumpDetails("a");
 DumpDetails("💩");
+DumpDetails("💩⌚️");
+DumpDetails("👨‍💻");
 DumpDetails("💩a");
 DumpDetails("💩è.a");
 DumpDetails("💩ì.a");
@@ -76,10 +78,14 @@ void DumpLabel(Label label)
 void DumpDetails(string name)
 {
     NormDetails details = ENSNormalize.ENSIP15.NormalizeDetails(name);
-    Console.Write($"[{name}] => [{details.Name.ToHexSequence()}] <{details.Desc}>");
+    Console.Write($"[{name}] => [{details.Name.ToHexSequence()}] <{details.GroupDescription}>({details.Groups.Count})");
     if (details.Emojis.Count > 0)
     {
         Console.Write($" Emoji({details.Emojis.Count})");
+    }
+    if (details.HasZWJEmoji)
+    {
+        Console.Write(" **ZWJ Emoji**");
     }
     if (details.PossiblyConfusing)
     {

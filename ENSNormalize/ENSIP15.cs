@@ -366,8 +366,7 @@ namespace ADRaffy.ENSNormalize
                 groups.Add(EMOJI);
             }
             bool confusing = POSSIBLY_CONFUSING.Any(norm.Contains);
-            string desc = string.Join("+", groups.Select(g => g.Name).ToArray());
-            return new(norm, desc, emojis, confusing);
+            return new(norm, groups, emojis, confusing);
         }
 
         Group CheckValid(int[] norm, IList<OutputToken> tokens)
