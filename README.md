@@ -34,9 +34,9 @@ NormDetails details = ENSNormalize.ENSIP15.NormalizeDetails("💩ì.a");
 
 string Name; // normalized name
 bool PossiblyConfusing; // if name should be carefully reviewed
-string GroupDescription = "Latin+Emoji"; // group summary for name
 HashSet<Group> Groups; // unique groups in name
 HashSet<EmojiSequence> Emojis; // unique emoji in name
+string GroupDescription = "Emoji+Latin"; // group summary for name
 bool HasZWJEmoji; // if any emoji contain 200D
 ```
 

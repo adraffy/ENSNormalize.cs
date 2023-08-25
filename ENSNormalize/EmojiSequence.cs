@@ -9,6 +9,7 @@ namespace ADRaffy.ENSNormalize
         public readonly ReadOnlyCollection<int> Beautified;
         public readonly ReadOnlyCollection<int> Normalized;
         public bool IsMangled { get => Beautified != Normalized; }
+        public bool HasZWJ { get => Normalized.Contains(0x200D); }
         internal EmojiSequence(int[] cps)
         {
             Beautified = new(cps);
@@ -20,5 +21,6 @@ namespace ADRaffy.ENSNormalize
         {
             return $"Emoji[{Beautified.ToHexSequence()}]";
         }
+
     }
 }
