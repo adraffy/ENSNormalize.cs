@@ -1,11 +1,11 @@
 # ENSNormalize.cs
 0-dependency [ENSIP-15](https://docs.ens.domains/ens-improvement-proposals/ensip-15-normalization-standard) in C# 
 
-* Reference Implementation: [@adraffy/ens-normalize.js](https://github.com/adraffy/ens-normalize.js)
+* Reference Implementation: [adraffy/ens-normalize.js](https://github.com/adraffy/ens-normalize.js)
 	* Unicode: `15.1.0`
 	* Spec Hash: [`1f6d3bdb7a724fe3b91f6d73ab14defcb719e0f4ab79022089c940e7e9c56b9c`](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/spec.json)
 * Passes **100%** [ENSIP-15 Validation Tests](https://github.com/ensdomains/docs/blob/master/ens-improvement-proposals/ensip-15/tests.json)
-* Passes **100%** [Unicode Normalization Tests](https://unicode.org/Public/15.0.0/ucd/NormalizationTest.txt)
+* Passes **100%** [Unicode Normalization Tests](https://unicode.org/Public/latest/ucd/NormalizationTest.txt)
 * Space Efficient: `~58KB .dll` using [Inline Blobs](./ENSNormalize/Blobs.cs) via [make.js](./Compress/make.js)
 * Legacy Support: `netstandard1.1`, `net35`, `netcoreapp3.1`
 * Nuget Repository: [![NuGet version](https://badge.fury.io/nu/ADRaffy.ENSNormalize.svg)](https://badge.fury.io/nu/ADRaffy.ENSNormalize)
