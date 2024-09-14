@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using ADRaffy.ENSNormalize;
 
+Console.WriteLine(ENSNormalize.NF.UnicodeVersion);
+
 foreach (Group g in ENSNormalize.ENSIP15.Groups)
 {
     Console.WriteLine($"{g.Index + 1}. {g} Primary({g.Primary.Count}) Secondary({g.Secondary.Count}) CM({g.CMWhitelisted})");
